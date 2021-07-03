@@ -6,6 +6,9 @@
     eprintf(__VA_ARGS__);                                                      \
     exit(EXIT_FAILURE);                                                        \
   }
+
+#define SBUF 1024
+
 static opcode::opcode opcodes[] = {
     {{0x01, opcode::ignorebyte, opcode::ignorebyte, 0x01}, opcode::event0},
     {{'a', 'b', 'c', 'd'}, opcode::event1},
@@ -20,8 +23,13 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
   int epollfd, nfds;
 
   int main_descriptor = socket(AF_INET, SOCK_STREAM, 0);
+  int main_descriptor_udp = socket(AF_INET, SOCK_DGRAM, 0);
   if (main_descriptor == -1)
     doExit("Can't init socket\n");
+  if(main_descriptor_udp == -1){
+	//maybe disable udp support
+	doExit("Can't init udp support socket\n");
+  }
 
   struct sockaddr_in my_addr;
   my_addr.sin_family = AF_INET;
@@ -31,11 +39,19 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
   ret = bind(main_descriptor, (struct sockaddr *)&my_addr,
              sizeof(struct sockaddr_in));
   if (ret == -1) {
-    doExit("Can't init listen on %s:%d\n", host, port);
+    doExit("Can't init bind on (TCP) %s:%d\n", host, port);
   }
+
+  ret = bind(main_descriptor_udp, (struct sockaddr *)&my_addr,
+             sizeof(struct sockaddr_in));
+  if (ret == -1) {
+    doExit("Can't init bind on (UDP) %s:%d\n", host, port);
+  }
+
   if (listen(main_descriptor, MAX_LISTEN) == -1)
-    doExit("Cant start listening\n");
-  printf("(serv) %s:%d listening\n", host, port);
+    doExit("Cant start listening (TCP) \n");
+
+  printf("(serv) %s:%d listening (TCP+UDP)\n", host, port);
   lua::pushval(L, true);
   lua_setglobal(L, serv_status_lua_var);
   lua_pop(L, 1);
@@ -55,6 +71,12 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
     perror("epoll_ctl: main_descriptor");
     exit(EXIT_FAILURE);
   }
+  ev.events = EPOLLIN | EPOLLET;
+  ev.data.fd = main_descriptor_udp;
+  if (epoll_ctl(epollfd, EPOLL_CTL_ADD, main_descriptor_udp, &ev) == -1) {
+    perror("epoll_ctl: main_descriptor_udp");
+    exit(EXIT_FAILURE);
+  }
 
   struct sockaddr_in client_addr;
   socklen_t sizeOfSockAddrType = sizeof(struct sockaddr_in);
@@ -69,7 +91,28 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
     }
 
     for (int n = 0; n < nfds; ++n) {
-      if (events[n].data.fd == main_descriptor) {
+
+      if (events[n].data.fd == main_descriptor_udp){
+		char buf_udp[SBUF];
+	    	size_t nbytes;
+		//puts("RecvFrom");
+		nbytes = recvfrom(events[n].data.fd, buf_udp, sizeof(buf_udp), 0,
+			(sockaddr*)&client_addr, &sizeOfSockAddrType);
+		buf_udp[nbytes]=0;
+	        const char *ip = inet_ntoa(client_addr.sin_addr);
+	        const uint16_t port = htons(client_addr.sin_port);
+		printf("(UDP) %s:%d -> %s\n", ip, port, buf_udp);
+
+		std::string tmp( std::string("Receivd from you: ")+buf_udp+"\n");
+
+		sendto(events[n].data.fd, tmp.c_str(), tmp.size(), 0,
+			reinterpret_cast<struct sockaddr*>(&client_addr), sizeOfSockAddrType);
+		//TODO: UDP handler function
+		continue;
+      }//udp 
+
+
+      if (events[n].data.fd == main_descriptor) {//if is main descriptor
         int conn_sock = accept(main_descriptor, (struct sockaddr *)&client_addr,
                                &sizeOfSockAddrType);
         if (conn_sock == -1) {
@@ -87,8 +130,10 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
           perror("epoll_ctl: conn_sock");
           exit(EXIT_FAILURE);
         }
-      } /*if acceptor*/ else { /*if client*/
-        char buf[1024];
+      } /*if acceptor TCP*/
+      else { /*if client*/
+	//TODO: TCP handler function
+        char buf[SBUF];
         size_t nbytes;
         const char *ip = inet_ntoa(client_addr.sin_addr);
         const uint16_t port = htons(client_addr.sin_port);
@@ -132,7 +177,7 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
 		close(events[n].data.fd);
 	}
         // do_use_fd(events[n].data.fd);
-      } // for(?)
-    }
-  }
+      } // else client
+    }//for(int n = 0; n < nfds; ++n
+  }//for(;;)
 }
