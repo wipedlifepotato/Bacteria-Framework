@@ -10,25 +10,43 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include<stdarg.h>
 
 #include "../bootstrap/utils.h"
 #include <iostream>
 
 #include <gtk/gtk.h>
 
+static int cPid;
+
+void stop_program(const char * msg, ...){
+	va_list l;
+	va_start(l,msg);
+	vfprintf(stderr,msg,l);
+	va_end(l);
+	kill(cPid, SIGKILL);
+	exit(1);
+
+}
+
 int main(int argc, char **argv) {
+int pid = fork();
+
+if(pid != 0){
+  cPid = pid;
   GtkWidget *window;
   gtk_init(&argc, &argv);
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_widget_show(window);
   gtk_main();
+}
 
   if (argc != 3)
-    return fprintf(stderr, "%s host port\n", argv[0]);
+    stop_program("%s host port\n", argv[0]);
   int udp_sock_serv = socket(AF_INET, SOCK_DGRAM, 0);
   int udp_sock_self = socket(AF_INET, SOCK_DGRAM, 0);
   if (udp_sock_serv < 0 || udp_sock_self < 0)
-    return fprintf(stderr, "Can't init sockets\n");
+    stop_program("Can't init sockets\n");
 
   struct sockaddr_in serv_addr;
   socklen_t socklen = sizeof(serv_addr);
@@ -37,7 +55,7 @@ int main(int argc, char **argv) {
   serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
   int ret = connect(udp_sock_serv, (struct sockaddr *)&serv_addr, socklen);
   if (ret < 0) {
-    return fprintf(stderr, "Cant connect to %s:%d\n", argv[1], argv[2]);
+    stop_program("Cant connect to %s:%d\n", argv[1], argv[2]);
   }
   char buf[1024];
   sprintf(buf, "initgetuserslist\n%c", '\0');
@@ -47,7 +65,7 @@ int main(int argc, char **argv) {
   recvfrom(udp_sock_serv, buf, sizeof(buf), 0, (struct sockaddr *)&serv_addr,
            &socklen);
   if (strlen(buf) == 0) {
-    return fprintf(stderr, "null data from %s:%s\n", argv[1], argv[2]);
+    stop_program("null data from %s:%s\n", argv[1], argv[2]);
   }
   puts("Buffer:");
   printf("%s\n", buf);
@@ -71,7 +89,7 @@ int main(int argc, char **argv) {
 
   ret = bind(udp_sock_self, (struct sockaddr *)&my_addr, sizeof(sockaddr_in));
   if (ret < 0) {
-    return fprintf(stderr, "Can't bind(hole punch)\n");
+    stop_program("Can't bind(hole punch)\n");
   }
   puts("users list:");
   printf("%s\n", buf);
