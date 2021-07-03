@@ -1,8 +1,8 @@
 #include "serv.h"
 #include "opcodes.h"
 #include <iostream>
+#include <sstream>
 #include <vector>
-#include <sstream>      
 #define doExit(...)                                                            \
   {                                                                            \
     eprintf(__VA_ARGS__);                                                      \
@@ -15,25 +15,24 @@ static opcode::opcode opcodes[] = {
     {{0x01, opcode::ignorebyte, opcode::ignorebyte, 0x01}, opcode::event0},
     {{'a', 'b', 'c', 'd'}, opcode::event1},
 };
-namespace serv{
-struct user{
-		std::string ip;
-		uint16_t port;
-		struct sockaddr_in in;
-		bool operator==(struct sockaddr_in & s){
-			return s.sin_family == in.sin_family && 
-				s.sin_port == in.sin_port &&
-				s.sin_addr.s_addr == s.sin_addr.s_addr;
-		}
-		user(struct sockaddr_in & s){
-			  ip = inet_ntoa(s.sin_addr);
-	        	  port = htons(s.sin_port);
-			  in.sin_family = s.sin_family;
-			  in.sin_port =s.sin_port;
-			  in.sin_addr.s_addr = s.sin_addr.s_addr;
-		}
+namespace serv {
+struct user {
+  std::string ip;
+  uint16_t port;
+  struct sockaddr_in in;
+  bool operator==(struct sockaddr_in &s) {
+    return s.sin_family == in.sin_family && s.sin_port == in.sin_port &&
+           s.sin_addr.s_addr == s.sin_addr.s_addr;
+  }
+  user(struct sockaddr_in &s) {
+    ip = inet_ntoa(s.sin_addr);
+    port = htons(s.sin_port);
+    in.sin_family = s.sin_family;
+    in.sin_port = s.sin_port;
+    in.sin_addr.s_addr = s.sin_addr.s_addr;
+  }
 };
-}
+} // namespace serv
 
 static std::vector<serv::user> users;
 
@@ -50,9 +49,9 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
   int main_descriptor_udp = socket(AF_INET, SOCK_DGRAM, 0);
   if (main_descriptor == -1)
     doExit("Can't init socket\n");
-  if(main_descriptor_udp == -1){
-	//maybe disable udp support
-	doExit("Can't init udp support socket\n");
+  if (main_descriptor_udp == -1) {
+    // maybe disable udp support
+    doExit("Can't init udp support socket\n");
   }
 
   struct sockaddr_in my_addr;
@@ -116,50 +115,49 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
 
     for (int n = 0; n < nfds; ++n) {
 
-      if (events[n].data.fd == main_descriptor_udp){
-		char buf_udp[SBUF];
-	    	size_t nbytes;
-		//puts("RecvFrom");
-		nbytes = recvfrom(events[n].data.fd, buf_udp, sizeof(buf_udp), 0,
-			(sockaddr*)&client_addr, &sizeOfSockAddrType);
-		buf_udp[nbytes]=0;
-	        const char *ip = inet_ntoa(client_addr.sin_addr);
-	        const uint16_t port = htons(client_addr.sin_port);
-		printf("(UDP) %s:%d -> %s\n", ip, port, buf_udp);
-	//	std::sstream tmp;
-		char tmp[256];
-		sprintf(tmp, "[%s:%d]: %s\n%c", ip, port, buf_udp, '\0');
-		sendto(events[n].data.fd, tmp, strlen(tmp), 0,
-			reinterpret_cast<struct sockaddr*>(&client_addr), sizeOfSockAddrType);
+      if (events[n].data.fd == main_descriptor_udp) {
+        char buf_udp[SBUF];
+        size_t nbytes;
+        // puts("RecvFrom");
+        nbytes = recvfrom(events[n].data.fd, buf_udp, sizeof(buf_udp), 0,
+                          (sockaddr *)&client_addr, &sizeOfSockAddrType);
+        buf_udp[nbytes] = 0;
+        const char *ip = inet_ntoa(client_addr.sin_addr);
+        const uint16_t port = htons(client_addr.sin_port);
+        printf("(UDP) %s:%d -> %s\n", ip, port, buf_udp);
+        //	std::sstream tmp;
+        char tmp[256];
+        sprintf(tmp, "[%s:%d]: %s\n%c", ip, port, buf_udp, '\0');
+        sendto(events[n].data.fd, tmp, strlen(tmp), 0,
+               reinterpret_cast<struct sockaddr *>(&client_addr),
+               sizeOfSockAddrType);
 
-		bool user_exists = false;
-		std::stringstream list;
-		for(auto u : users){
-			//TODO: 	ping-pong time(NULL) ...500ms -> users.erase(usr); 
-			if(u == client_addr) {
-				puts("User exists already");
-				user_exists=true;
-				break;
-			}
-			list << u.ip << ":" << u.port << ";";
-		}
+        bool user_exists = false;
+        std::stringstream list;
+        for (auto u : users) {
+          // TODO: 	ping-pong time(NULL) ...500ms -> users.erase(usr);
+          if (u == client_addr) {
+            puts("User exists already");
+            user_exists = true;
+            break;
+          }
+          list << u.ip << ":" << u.port << ";";
+        }
 
-		if(!user_exists){
-			serv::user usr{client_addr};
-			users.push_back(usr);
-		}
-		
-		sendto(events[n].data.fd, list.str().c_str(), list.str().size(), 0,
-			reinterpret_cast<struct sockaddr*>(&client_addr), sizeOfSockAddrType);
-		
+        if (!user_exists) {
+          serv::user usr{client_addr};
+          users.push_back(usr);
+        }
 
-		
-		//TODO: UDP handler function
-		continue;
-      }//udp 
+        sendto(events[n].data.fd, list.str().c_str(), list.str().size(), 0,
+               reinterpret_cast<struct sockaddr *>(&client_addr),
+               sizeOfSockAddrType);
 
+        // TODO: UDP handler function
+        continue;
+      } // udp
 
-      if (events[n].data.fd == main_descriptor) {//if is main descriptor
+      if (events[n].data.fd == main_descriptor) { // if is main descriptor
         int conn_sock = accept(main_descriptor, (struct sockaddr *)&client_addr,
                                &sizeOfSockAddrType);
         if (conn_sock == -1) {
@@ -177,9 +175,9 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
           perror("epoll_ctl: conn_sock");
           exit(EXIT_FAILURE);
         }
-      } /*if acceptor TCP*/
+      }      /*if acceptor TCP*/
       else { /*if client*/
-	//TODO: TCP handler function
+             // TODO: TCP handler function
         char buf[SBUF];
         size_t nbytes;
         const char *ip = inet_ntoa(client_addr.sin_addr);
@@ -209,22 +207,22 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
           opcode::ignorebyte, 0x01}, NULL}; std::cout << (op == op2) <<
           std::endl;
           */
-	bool found=false;
+        bool found = false;
         opcode::opcode_data data = {buf[0], buf[1], buf[2], buf[3]};
         for (auto op : opcodes) {
           if (op == data) {
             puts("Opcode found");
             op.getEvent().run(L, events[n].data.fd, ip, port, buf);
-	    found=true;
+            found = true;
             break;
           }
         } // for
-        if(!found){
-		puts("Opcode not founded");
-		close(events[n].data.fd);
-	}
+        if (!found) {
+          puts("Opcode not founded");
+          close(events[n].data.fd);
+        }
         // do_use_fd(events[n].data.fd);
       } // else client
-    }//for(int n = 0; n < nfds; ++n
-  }//for(;;)
+    }   // for(int n = 0; n < nfds; ++n
+  }     // for(;;)
 }

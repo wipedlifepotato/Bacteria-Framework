@@ -1,0 +1,28 @@
+12 june 2021:
+	init first code
+..(pause)..
+19 june 2021:
+	libjson for lua. (with C support)
+	libcryptocoins for lua (with C support)
+20 june 2021:
+	lua submodules system.
+23 june 2021:
+	AES(ECB+CBC), ChaCha20 x25519 for lua (with C support)
+25 june 2021:
+	GD support lua; (with C support)
+26 june 2021:
+	GMP support lua(with C support)
+	Travis CI added.
+27 June 2021:
+	ed255^19 and RSA support in Lua (with C support) [sign/verify]
+28 June 2021:
+	first idea of server.
+3 Jule 2021:
+	pre init bootstrap + client. (UDP+TCP) with events support on opcodes. Lua <-> C++
+	UDP hole Punch pre inited;
+
+(?)
+	first wxWidgets client for server
+
+
+
