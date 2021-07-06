@@ -236,7 +236,7 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
         } // for
         if (!found) {
           puts("Opcode not founded");
-          close(events[n].data.fd);
+          //close(events[n].data.fd);
         }
         // do_use_fd(events[n].data.fd);
       } // else client

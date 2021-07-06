@@ -204,6 +204,9 @@ struct serv_data {
       std::cout << "Users count: " << users_map.size() - 1 << std::endl;
       if (users_map.size() - 1 > 2) {
         std::cout << "Test passed!" << std::endl;
+	m_data.write("abcd\n", true);
+	auto b = m_data.read(1024,true);
+	std::cout << "TCP RET:" << b.first << std::endl;
         sleep(1000);
       }
     } catch (std::exception &e) {
