@@ -78,8 +78,10 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
   tv.tv_sec = 0;
   tv.tv_usec = 250;
 
-  setsockopt(main_descriptor, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-  setsockopt(main_descriptor_udp, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+  setsockopt(main_descriptor, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv,
+             sizeof tv);
+  setsockopt(main_descriptor_udp, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv,
+             sizeof tv);
 
   printf("(serv) %s:%d listening (TCP+UDP)\n", host, port);
   lua::pushval(L, true);
@@ -126,10 +128,12 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
         char buf_udp[SBUF];
         size_t nbytes;
         // puts("RecvFrom");
-	std::cout << "RECVFROM UDP" << std::endl;
-        nbytes = recvfrom(events[n].data.fd, buf_udp, sizeof(buf_udp), O_NONBLOCK,
-                          (sockaddr *)&client_addr, &sizeOfSockAddrType);
-	if(nbytes < 0) continue;//timeout
+        std::cout << "RECVFROM UDP" << std::endl;
+        nbytes =
+            recvfrom(events[n].data.fd, buf_udp, sizeof(buf_udp), O_NONBLOCK,
+                     (sockaddr *)&client_addr, &sizeOfSockAddrType);
+        if (nbytes < 0)
+          continue; // timeout
         buf_udp[nbytes] = 0;
         const char *ip = inet_ntoa(client_addr.sin_addr);
         const uint16_t port = htons(client_addr.sin_port);
@@ -148,7 +152,7 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
           if (u == client_addr) {
             puts("User exists already");
             user_exists = true;
-        //    break;
+            //    break;
           }
           list << u.ip << ":" << u.port << ";";
         }
@@ -157,18 +161,18 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
           serv::user usr{client_addr};
           users.push_back(usr);
         }
-	std::cout << "sendto" << std::endl;
-        sendto(events[n].data.fd, list.str().c_str(), list.str().size(), O_NONBLOCK,
-               reinterpret_cast<struct sockaddr *>(&client_addr),
+        std::cout << "sendto" << std::endl;
+        sendto(events[n].data.fd, list.str().c_str(), list.str().size(),
+               O_NONBLOCK, reinterpret_cast<struct sockaddr *>(&client_addr),
                sizeOfSockAddrType);
 
         // TODO: UDP handler function
-	std::cout << "Continue" << std::endl;
+        std::cout << "Continue" << std::endl;
         continue;
       } // udp
 
       if (events[n].data.fd == main_descriptor) { // if is main descriptor
-	puts("Accept handler");
+        puts("Accept handler");
         int conn_sock = accept(main_descriptor, (struct sockaddr *)&client_addr,
                                &sizeOfSockAddrType);
         if (conn_sock == -1) {
@@ -189,13 +193,14 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
       }      /*if acceptor TCP*/
       else { /*if client*/
              // TODO: TCP handler function
-	puts("client handler TCP");
+        puts("client handler TCP");
         char buf[SBUF];
         size_t nbytes;
         const char *ip = inet_ntoa(client_addr.sin_addr);
         const uint16_t port = htons(client_addr.sin_port);
         bzero(buf, sizeof(buf));
-        if ((nbytes = recv(events[n].data.fd, buf, sizeof(buf), O_NONBLOCK)) <= 0) {
+        if ((nbytes = recv(events[n].data.fd, buf, sizeof(buf), O_NONBLOCK)) <=
+            0) {
           if (errno != EWOULDBLOCK && nbytes != 0) {
             perror("read/fd2");
           }
