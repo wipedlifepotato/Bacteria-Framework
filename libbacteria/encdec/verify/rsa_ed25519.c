@@ -125,8 +125,9 @@ struct aKeyPair generateKeysRSA(unsigned int bits, unsigned int primes,
   return rt;
 }
 
-struct aKeyPair ed25519rsa_initPrivKey(const char *filepath,
-                            enum aTypes type /*,const char * password*/) {
+struct aKeyPair
+ed25519rsa_initPrivKey(const char *filepath,
+                       enum aTypes type /*,const char * password*/) {
   struct aKeyPair rt;
   EVP_PKEY *pkey = NULL;
   EVP_PKEY_CTX *ctx = NULL;
@@ -158,8 +159,9 @@ struct aKeyPair ed25519rsa_initPrivKey(const char *filepath,
   fprintf(stderr, msg);                                                        \
   return 0;
 
-size_t ed25519rsa_signIt(const char *plaintext, size_t plaintext_size, uint8_t *sigret,
-              EVP_PKEY *key, const EVP_MD *mdalgo, enum aTypes type) {
+size_t ed25519rsa_signIt(const char *plaintext, size_t plaintext_size,
+                         uint8_t *sigret, EVP_PKEY *key, const EVP_MD *mdalgo,
+                         enum aTypes type) {
   EVP_MD_CTX *md;
   if (!(md = EVP_MD_CTX_create())) {
     fprintf(stderr, "Error MD CTX create\n");
@@ -209,9 +211,9 @@ size_t ed25519rsa_signIt(const char *plaintext, size_t plaintext_size, uint8_t *
 #undef ERRSIGN
 
 int ed25519rsa_verifyIt(uint8_t *signature, size_t signature_size,
-             const uint8_t *plaintext, size_t plaintext_size,
-             uint8_t *signingkey, size_t signingkey_size, const EVP_MD *mdalgo,
-             enum aTypes type) {
+                        const uint8_t *plaintext, size_t plaintext_size,
+                        uint8_t *signingkey, size_t signingkey_size,
+                        const EVP_MD *mdalgo, enum aTypes type) {
 
   EVP_MD_CTX *md;
   if (!(md = EVP_MD_CTX_create())) {

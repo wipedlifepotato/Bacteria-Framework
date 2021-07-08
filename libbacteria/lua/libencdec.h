@@ -3,6 +3,7 @@
 #include"encdec/x25519.h"
 #include<openssl/sha.h>
 #include"macros.h"
+#include"encdec/hashes.h"
 
 #include "lua.h"
 

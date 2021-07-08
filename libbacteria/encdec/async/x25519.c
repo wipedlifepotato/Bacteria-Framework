@@ -2,11 +2,12 @@
 #include <openssl/pem.h>
 
 static size_t len_key = LENKEY;
-//TODO: 
+// TODO:
 
-#define ADDPREFIX(what,to) what ## to
+#define ADDPREFIX(what, to) what##to
 
-struct x25519_keysPair x25519_createKeyPair(const uint8_t *priv, const uint8_t *pub) {
+struct x25519_keysPair x25519_createKeyPair(const uint8_t *priv,
+                                            const uint8_t *pub) {
   struct x25519_keysPair ret;
   bzero(ret.pubKey, sizeof(ret.pubKey));
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
@@ -26,46 +27,50 @@ struct x25519_keysPair x25519_createKeyPair(const uint8_t *priv, const uint8_t *
   return ret;
 }
 #define BUFSIZE 256
-struct x25519_keysPair x25519_initKeyPairFromFile(const char * filepath){
-	struct x25519_keysPair rt;
-	FILE *keyfile = fopen(filepath, "rb");
-	size_t fs;
-	fseek(keyfile, SEEK_END, 0);
-	fs = ftell(keyfile);
-	fseek(keyfile, SEEK_SET, 0 );
-	if(fs == 0){
-		 fclose(keyfile);
-		 return rt;
-	}
-	char buf[BUFSIZE];
-	fread(buf, BUFSIZE, 1, keyfile);
-	fseek(keyfile, SEEK_SET, 0 );
-	if ( strstr(buf,"-----BEGIN PRIVATE KEY-----") == NULL){
-		//puts("Not found");
-		 fclose(keyfile);
-		 return rt;
-	}
+struct x25519_keysPair x25519_initKeyPairFromFile(const char *filepath) {
+  struct x25519_keysPair rt;
+  FILE *keyfile = fopen(filepath, "rb");
+  size_t fs;
+  fseek(keyfile, SEEK_END, 0);
+  fs = ftell(keyfile);
+  fseek(keyfile, SEEK_SET, 0);
+  if (fs == 0) {
+    fclose(keyfile);
+    return rt;
+  }
+  char buf[BUFSIZE];
+  fread(buf, BUFSIZE, 1, keyfile);
+  fseek(keyfile, SEEK_SET, 0);
+  if (strstr(buf, "-----BEGIN PRIVATE KEY-----") == NULL) {
+    // puts("Not found");
+    fclose(keyfile);
+    return rt;
+  }
 
-	if(keyfile == NULL) return rt;
-	//EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
-	EVP_PKEY *pkey = NULL;
-	pkey = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
-	unsigned char pubKey[LENKEY+1];
-	unsigned char privKey[LENKEY+1];
-	pubKey[LENKEY]=0;privKey[LENKEY]=0;
-	x25519_getRawPubKey(pkey, pubKey);
-	x25519_getRawPrivKey(pkey, privKey);
-	//EVP_PKEY_CTX_free(ctx);
-	EVP_PKEY_free(pkey);
-	return x25519_createKeyPair(privKey, pubKey);
+  if (keyfile == NULL)
+    return rt;
+  // EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+  EVP_PKEY *pkey = NULL;
+  pkey = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+  unsigned char pubKey[LENKEY + 1];
+  unsigned char privKey[LENKEY + 1];
+  pubKey[LENKEY] = 0;
+  privKey[LENKEY] = 0;
+  x25519_getRawPubKey(pkey, pubKey);
+  x25519_getRawPrivKey(pkey, privKey);
+  // EVP_PKEY_CTX_free(ctx);
+  EVP_PKEY_free(pkey);
+  return x25519_createKeyPair(privKey, pubKey);
 }
 
-int x25519_savePrivKey(const char * filepath, struct x25519_keysPair * p){
-	FILE * exitFile;
-	if(p->privKey == NULL||filepath == NULL || (exitFile = fopen(filepath,"w")) == NULL ) return -1;
-	PEM_write_PrivateKey(exitFile, p->privKey, NULL, NULL, 0, NULL, NULL); 
-	fclose(exitFile);
-	return 0;
+int x25519_savePrivKey(const char *filepath, struct x25519_keysPair *p) {
+  FILE *exitFile;
+  if (p->privKey == NULL || filepath == NULL ||
+      (exitFile = fopen(filepath, "w")) == NULL)
+    return -1;
+  PEM_write_PrivateKey(exitFile, p->privKey, NULL, NULL, 0, NULL, NULL);
+  fclose(exitFile);
+  return 0;
 }
 
 void x25519_getRawPrivKey(EVP_PKEY *privKey, uint8_t *priv) {
@@ -89,7 +94,7 @@ void x25519_freeSharedKeys(uint8_t *w, ...) {
   va_list ap;
   va_start(ap, w);
   while (*w) {
-   x25519_freeSharedKey(w);
+    x25519_freeSharedKey(w);
   }
   va_end(ap);
 }
@@ -121,8 +126,8 @@ struct x25519_keysPair x25519_generateKeyPair(void) {
   return ret;
 }
 
-uint8_t *x25519_getSharedKey(struct x25519_keysPair *pair, const uint8_t *pubPeer,
-                      size_t *skeylen) {
+uint8_t *x25519_getSharedKey(struct x25519_keysPair *pair,
+                             const uint8_t *pubPeer, size_t *skeylen) {
   if (!pubPeer || (pubPeer[31] & 0x80)) {
     fprintf(stderr, "Is not pubkey!\n");
     return NULL;

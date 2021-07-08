@@ -15,9 +15,6 @@ int luaopen_encdec(lua_State *L) {
   return 1;
 }
 
-
-
-
 int lua_genRandBytes(lua_State *L) {
   int len = (int)luaL_checknumber(L, 1);
   if (len <= 0) {
@@ -195,7 +192,8 @@ int lua_getKeyPair(lua_State *L) {
   */
   size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
                   sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
-  struct x25519_keysPair *ret = (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
+  struct x25519_keysPair *ret =
+      (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
   struct x25519_keysPair pair = x25519_generateKeyPair();
   if (pair.pKeyCtx == NULL) {
     luaL_error(L, "Can't CTX init");
@@ -208,32 +206,34 @@ int lua_getKeyPair(lua_State *L) {
   return 1;
 }
 
-int lua_initKeyPairFromFile ( lua_State * L ){
-	char * filepath = (char*) luaL_checkstring(L, 1);
-	struct x25519_keysPair rt = x25519_initKeyPairFromFile(filepath);
-	if( rt.privKey == NULL ){
-		lua_pushnil(L);
-		return 1;
-	}
-	size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
+int lua_initKeyPairFromFile(lua_State *L) {
+  char *filepath = (char *)luaL_checkstring(L, 1);
+  struct x25519_keysPair rt = x25519_initKeyPairFromFile(filepath);
+  if (rt.privKey == NULL) {
+    lua_pushnil(L);
+    return 1;
+  }
+  size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
                   sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
-        struct x25519_keysPair *ret = (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
-	ret->privKey = rt.privKey;
-	memcpy(ret->pubKey, rt.pubKey, LENKEY + 1);
-	// ret->pubKey = pair.pubKey;
-	ret->pKeyCtx = rt.pKeyCtx;
-	return 1;
-
+  struct x25519_keysPair *ret =
+      (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
+  ret->privKey = rt.privKey;
+  memcpy(ret->pubKey, rt.pubKey, LENKEY + 1);
+  // ret->pubKey = pair.pubKey;
+  ret->pKeyCtx = rt.pKeyCtx;
+  return 1;
 }
 
-int lua_saveKeyPairToFile( lua_State * L ){
+int lua_saveKeyPairToFile(lua_State *L) {
   struct x25519_keysPair *in = (struct x25519_keysPair *)lua_touserdata(L, 1);
-  char * filepath = (char*) luaL_checkstring(L, 2);
+  char *filepath = (char *)luaL_checkstring(L, 2);
   if (in == NULL)
     luaL_error(L, "x25519_keysPair broken");
-  int ret= x25519_savePrivKey(filepath, in);
-  if ( ret == -1 ) lua_pushnil(L);
-  else lua_pushboolean(L, 1);
+  int ret = x25519_savePrivKey(filepath, in);
+  if (ret == -1)
+    lua_pushnil(L);
+  else
+    lua_pushboolean(L, 1);
   return 1;
 }
 
@@ -249,12 +249,18 @@ int lua_freeKeyPair(lua_State *L) {
 // int lua_freeSharedKey(lua_State *L) {}
 
 INITLUAFUNC(toSHA512) {
-  INITHASHFUNC(SHA512, 129);
+  uint8_t *data = (uint8_t *)luaL_checkstring(L, 1);
+  char outputstring[SHA512_OUTPUTSTRING_SIZE];
+  // INITHASHFUNC(SHA512, 129);
+  toSHA512(data, outputstring);
   lua_pushstring(L, outputstring);
   return 1;
 }
 INITLUAFUNC(toSHA256) {
-  INITHASHFUNC(SHA256, 65);
+  uint8_t *data = (uint8_t *)luaL_checkstring(L, 1);
+  char outputstring[SHA256_OUTPUTSTRING_SIZE];
+  toSHA256(data, outputstring);
+  // INITHASHFUNC(SHA256, 65);
   lua_pushstring(L, outputstring);
   return 1;
 }
@@ -265,7 +271,8 @@ int lua_createKeyPair(lua_State *L) {
   struct x25519_keysPair pair = x25519_createKeyPair(priv, pub);
   size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
                   sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
-  struct x25519_keysPair *ret = (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
+  struct x25519_keysPair *ret =
+      (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
   if (pair.pKeyCtx == NULL) {
     luaL_error(L, "Can't CTX init");
     return fprintf(stderr, "can't CTX init\n");
@@ -300,7 +307,8 @@ int lua_getSharedKey(lua_State *L) {
   uint8_t *pub = (uint8_t *)luaL_checkstring(L, 2);
   if (in == NULL)
     luaL_error(L, "x25519_keysPair broken");
-  unsigned char *shared0 = (unsigned char *)x25519_getSharedKey(in, pub, &skeylen);
+  unsigned char *shared0 =
+      (unsigned char *)x25519_getSharedKey(in, pub, &skeylen);
   //  printf("getShared0: %s size key:%d\n", shared0, skeylen	);
   //  lua_pop(L,2);
   lua_pushlstring(L, shared0, skeylen);
