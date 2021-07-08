@@ -5,7 +5,7 @@
 INITLUAFUNC(generateKeysEd25519);
 INITLUAFUNC(generateKeysRSA);
 INITLUAFUNC(initPrivKey);
-INITLUAFUNC(singIt);
+INITLUAFUNC(signIt);
 INITLUAFUNC(verifyIt);
 INITLUAFUNC(freeaKey);
 
@@ -20,7 +20,7 @@ static const struct luaL_reg libed25519rsa [] = {
 LUAPAIR(generateKeysEd25519)
 LUAPAIR(generateKeysRSA)
 LUAPAIR(initPrivKey)
-LUAPAIR(singIt)
+LUAPAIR(signIt)
 LUAPAIR(verifyIt)
 LUAPAIR(freeaKey)
 LUAPAIR(getaPubKey)

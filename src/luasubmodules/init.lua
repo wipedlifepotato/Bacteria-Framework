@@ -102,7 +102,12 @@ local function EncDecTest()
 	pub1 = k1:getPubKey()
 	pub2 = k2:getPubKey()
 	priv2 = k2:getPrivKey()
+	k2:saveKeyPairToFile("x25519.dat")
+	--k4 = bacteria_aes.new()
+	k4 = bacteria_aes:newKeyPair()
 
+	k4:initKeyPairFromFile("x25519.dat")
+	
 
 	print("Pub1: ", string.tohex(pub1), string.fromhex(string.tohex(pub1)) == pub1 )
 	print("Pub2: ", string.tohex(pub2), string.fromhex(string.tohex(pub2)) == pub2 )
@@ -122,6 +127,10 @@ local function EncDecTest()
 	shared0=k1:getSharedKey(pub2)
 	shared1=k2:getSharedKey(pub1)
 	shared2=k3:getSharedKey(pub1)
+	shared3 = k4:getSharedKey(pub1)
+	if not shared3 == shared1 then
+		error("Shared3 key not = shared1 key")
+	end
 	--print("Shared0:", shared0)
 	--print("Shared1:", shared1)
 
@@ -159,13 +168,13 @@ local function checkGD(width,height,quality,color)
 	randColor1 = img:getRandColor()
 	print("done")
 	print("draw random")
-	img:drawRandomLines(1) -- count
-	img:drawRandomPixels(1,2) -- min count, max count
+	img:drawRandomLines(100) -- count
+	img:drawRandomPixels(30,100) -- min count, max count
 	print("draw rect")
 	img:drawRect(0,0, 30, 30, redColor)
 	img:drawRect(30,30, 60,60, randColor1)
 	img:drawRect(60,60,90,90, greenColor)
-	img:drawRect(90,90,120,120, randColor)
+	img:drawRect(90,90,120,120, img:getRandColor())
 	print("drawLine")
 	img:drawLine(0,0,width,height, randColor)
 	img:setDefFont("./fonts/dummy.ttf")
@@ -260,7 +269,7 @@ local function checkEd25519rsa ()
 
 	print("\n\nCheck sign and verify\n\n")
 	msgtosign = "testMsg"
-	sign, ssign = ed25519rsa.singIt(ed, msgtosign )
+	sign, ssign = ed25519rsa.signIt(ed, msgtosign )
 	print("Sign: ", string.tohex(sign), " size of sign: ", ssign)
 	print("verify check")
 

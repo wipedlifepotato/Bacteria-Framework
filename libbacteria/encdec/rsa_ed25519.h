@@ -92,12 +92,12 @@ char * GetStrFromLineToLine(const char fullString[], const char startString[], c
 struct aKeyPair generateKeysEd25519(FILE *exitFile); // 2056, 3
 struct aKeyPair generateKeysRSA(unsigned int bits, unsigned int primes,
                                 FILE *exitFile);
-struct aKeyPair initPrivKey(const char *filepath,
+struct aKeyPair ed25519rsa_initPrivKey(const char *filepath,
                             enum aTypes type /*,const char * password*/) ;
 
-size_t singIt(const char *plaintext, size_t plaintext_size, uint8_t *sigret,
+size_t ed25519rsa_signIt(const char *plaintext, size_t plaintext_size, uint8_t *sigret,
               EVP_PKEY *key,const EVP_MD * mdalgo,enum aTypes type);
-int verifyIt(uint8_t *signature, size_t signature_size,const uint8_t * plaintext, size_t plaintext_size ,
+int ed25519rsa_verifyIt(uint8_t *signature, size_t signature_size,const uint8_t * plaintext, size_t plaintext_size ,
               uint8_t* signingkey, size_t signingkey_size,const EVP_MD * mdalgo,enum aTypes type);
 
 

@@ -64,6 +64,18 @@ function baes:newKeyPair(keyPair)
 			obj.keyPair = nil
 		end
 	end
+        function obj:initKeyPairFromFile(filepath)
+		tmp = encdec.initKeyPairFromFile(filepath)
+		if tmp == nil then error("Can't init keypair from file") end
+		obj.keyPair = tmp;
+	end
+	function obj:saveKeyPairToFile(filepath)
+		if obj.keyPair == nil then
+			error("Can't save. not inited key pair")
+		end
+		r = encdec.saveKeyPairToFile(obj.keyPair, filepath)
+		if r == nil then error("Can't save to file") end
+	end
 	return obj
 end
 function baes:new(key,iv)

@@ -1,7 +1,13 @@
 #include "encdec/x25519.h"
+#include <openssl/pem.h>
+
 static size_t len_key = LENKEY;
-struct keysPair createKeyPair(const uint8_t *priv, const uint8_t *pub) {
-  struct keysPair ret;
+//TODO: 
+
+#define ADDPREFIX(what,to) what ## to
+
+struct x25519_keysPair x25519_createKeyPair(const uint8_t *priv, const uint8_t *pub) {
+  struct x25519_keysPair ret;
   bzero(ret.pubKey, sizeof(ret.pubKey));
   EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
   if (!ctx) {
@@ -10,7 +16,7 @@ struct keysPair createKeyPair(const uint8_t *priv, const uint8_t *pub) {
   }
   EVP_PKEY *privKey =
       EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, priv, len_key);
-  getRawPubKey(privKey, ret.pubKey);
+  x25519_getRawPubKey(privKey, ret.pubKey);
   // EVP_PKEY_get_raw_public_key(privKey, ret.pubKey, &len_key);
   ret.privKey = privKey;
   // ret.pubKey = pubKey;
@@ -20,34 +26,59 @@ struct keysPair createKeyPair(const uint8_t *priv, const uint8_t *pub) {
   return ret;
 }
 
-void getRawPrivKey(EVP_PKEY *privKey, uint8_t *priv) {
+struct x25519_keysPair x25519_initKeyPairFromFile(const char * filepath){
+	struct x25519_keysPair rt;
+	FILE *keyfile = fopen(filepath, "rb");
+	if(keyfile == NULL) return rt;
+	//EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+	EVP_PKEY *pkey = NULL;
+	pkey = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
+	unsigned char pubKey[LENKEY+1];
+	unsigned char privKey[LENKEY+1];
+	pubKey[LENKEY]=0;privKey[LENKEY]=0;
+	x25519_getRawPubKey(pkey, pubKey);
+	x25519_getRawPrivKey(pkey, privKey);
+	//EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_free(pkey);
+	return x25519_createKeyPair(privKey, pubKey);
+}
+
+int x25519_savePrivKey(const char * filepath, struct x25519_keysPair * p){
+	FILE * exitFile;
+	if(p->privKey == NULL||filepath == NULL || (exitFile = fopen(filepath,"w")) == NULL ) return -1;
+	PEM_write_PrivateKey(exitFile, p->privKey, NULL, NULL, 0, NULL, NULL); 
+	fclose(exitFile);
+	return 0;
+}
+
+void x25519_getRawPrivKey(EVP_PKEY *privKey, uint8_t *priv) {
   EVP_PKEY_get_raw_private_key(privKey, priv, &len_key);
 }
-void getRawPubKey(EVP_PKEY *privKey, uint8_t *pub) {
+void x25519_getRawPubKey(EVP_PKEY *privKey, uint8_t *pub) {
   EVP_PKEY_get_raw_public_key(privKey, pub, &len_key);
 }
 
-void freeKeyPair(struct keysPair *pair) {
+void x25519_freeKeyPair(struct x25519_keysPair *pair) {
   EVP_PKEY_CTX_free(pair->pKeyCtx);
   EVP_PKEY_free(pair->privKey);
   //	EVP_PKEY_free(pair->pubKey);
 }
-void freeSharedKey(uint8_t *w) {
+void x25519_freeSharedKey(uint8_t *w) {
   if (w != NULL)
     OPENSSL_free(w);
 }
 
-void freeSharedKeys(uint8_t *w, ...) {
+void x25519_freeSharedKeys(uint8_t *w, ...) {
   va_list ap;
   va_start(ap, w);
   while (*w) {
-    freeSharedKey(w);
+   x25519_freeSharedKey(w);
   }
   va_end(ap);
 }
 
-struct keysPair generateKeyPair(void) {
-  struct keysPair ret;
+struct x25519_keysPair x25519_generateKeyPair(void) {
+  struct x25519_keysPair ret;
   EVP_PKEY_CTX *ctx;
   EVP_PKEY *pkey = NULL;
   ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
@@ -73,7 +104,7 @@ struct keysPair generateKeyPair(void) {
   return ret;
 }
 
-uint8_t *getSharedKey(struct keysPair *pair, const uint8_t *pubPeer,
+uint8_t *x25519_getSharedKey(struct x25519_keysPair *pair, const uint8_t *pubPeer,
                       size_t *skeylen) {
   if (!pubPeer || (pubPeer[31] & 0x80)) {
     fprintf(stderr, "Is not pubkey!\n");
@@ -114,8 +145,8 @@ uint8_t *getSharedKey(struct keysPair *pair, const uint8_t *pubPeer,
 }
 
 static int x25519_bacteria_test(void) {
-  struct keysPair pair = generateKeyPair();
-  struct keysPair pair1 = generateKeyPair();
+  struct x25519_keysPair pair = x25519_generateKeyPair();
+  struct x25519_keysPair pair1 = x25519_generateKeyPair();
   if (pair.pKeyCtx == NULL || pair1.pKeyCtx == NULL) {
     return fprintf(stderr, "can't CTX init\n");
   }
@@ -128,10 +159,10 @@ static int x25519_bacteria_test(void) {
 
   // bzero(shared0,sizeof(shared0));
   // bzero(shared1,sizeof(shared0));
-  uint8_t *shared0 = getSharedKey(&pair, pair1.pubKey, &skeylen);
-  uint8_t *shared1 = getSharedKey(&pair1, pair.pubKey, &skeylen1);
+  uint8_t *shared0 = x25519_getSharedKey(&pair, pair1.pubKey, &skeylen);
+  uint8_t *shared1 = x25519_getSharedKey(&pair1, pair.pubKey, &skeylen1);
   printf("shared0: %s \nshared1: %s \n", shared0, shared1);
-  freeSharedKeys(shared0, shared1, NULL);
-  freeKeyPair(&pair);
-  freeKeyPair(&pair1);
+  x25519_freeSharedKeys(shared0, shared1, NULL);
+  x25519_freeKeyPair(&pair);
+  x25519_freeKeyPair(&pair1);
 }

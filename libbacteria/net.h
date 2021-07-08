@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>          /* See NOTES */
@@ -11,9 +14,16 @@
 #include<fcntl.h>
 #include<unistd.h>
 #include<errno.h>
+
+#include"encdec/x25519.h"
+#include"encdec/rsa_ed25519.h"
+#include"encdec/base64.h"
+#include"encdec/AES.h"
+
+
 typedef enum{
-	CON_UNC = 1<<1,
-	CON_UDP=1<<2, CON_TCP=1<<3
+	CON_UNC = 1<<0,
+	CON_UDP=1<<1, CON_TCP=1<<2
 }contype;
 
 
@@ -23,9 +33,11 @@ typedef enum{
 }peertype;
 
 struct peer{
-	char * ip;
+	struct sockaddr_in addr_in;
+	char * host;
 	uint16_t port;
-	int sock;
+	int sock_tcp;
+	int sock_udp;
 	contype allow_con;
 	peertype type;
 	char * shared_key; // with another peer
@@ -33,5 +45,9 @@ struct peer{
 	char * x25519_key; // pub
 	char * rsa_key; // pub
 	char * identificator; // sha256 of pubkey x25519
-};
 
+	char * host_mirrors[]; // i2p / onion / yggdrasil / etc mirrors.
+};
+#ifdef __cplusplus
+}
+#endif

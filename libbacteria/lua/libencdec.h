@@ -17,6 +17,8 @@ int lua_getKeyPair (lua_State *L);
 int lua_freeKeyPair (lua_State *L);
 int lua_freeSharedKey (lua_State *L);
 int lua_createKeyPair (lua_State *L);
+int lua_initKeyPairFromFile ( lua_State * L );
+int lua_saveKeyPairToFile ( lua_State * L );
 int lua_getSharedKey (lua_State *L);
 int lua_freeAESData(lua_State *L);
 
@@ -47,6 +49,8 @@ static const struct luaL_reg encdeclib [] = {
       {"getSharedKey", lua_getSharedKey},
       {"freeAESData", lua_freeAESData},
       {"getAESData", lua_getAESData},
+      {"initKeyPairFromFile", lua_initKeyPairFromFile},
+      {"saveKeyPairToFile", lua_saveKeyPairToFile},
       LUAPAIR(getAESData_len)
       LUAPAIR(createAESData)
       LUAPAIR(getPubKey)

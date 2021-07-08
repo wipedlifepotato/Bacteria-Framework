@@ -61,7 +61,7 @@ INITLUAFUNC(generateKeysRSA) {
 INITLUAFUNC(initPrivKey) {
   const char *filepath = (char *)luaL_checkstring(L, 1);
   bool isEd25519 = lua_toboolean(L, 2);
-  struct aKeyPair rt = initPrivKey(filepath, isEd25519 ? ed25519 : aRSA);
+  struct aKeyPair rt = ed25519rsa_initPrivKey(filepath, isEd25519 ? ed25519 : aRSA);
   if (rt.pkey == NULL)
     luaL_error(L, "Cant open privkey file\n");
   GETRET(isEd25519 ? ed25519 : aRSA);
@@ -75,13 +75,13 @@ INITLUAFUNC(initPrivKey) {
 #define MAXRETBUF 65
 // 512/8 = 64
 
-INITLUAFUNC(singIt) {
+INITLUAFUNC(signIt) {
   INITKEYPAIR(1);
   const char *textToSign = (char *)luaL_checkstring(L, 2);
 
   char retbuf[MAXRETBUF];
   bzero(retbuf, MAXRETBUF);
-  size_t sizeSign = singIt(textToSign, strlen(textToSign), retbuf, in->pkey,
+  size_t sizeSign = ed25519rsa_signIt(textToSign, strlen(textToSign), retbuf, in->pkey,
                            EVP_sha512(), in->type);
   retbuf[sizeSign] = 0;
   lua_pushlstring(L, retbuf, sizeSign);
@@ -103,7 +103,7 @@ INITLUAFUNC(verifyIt) {
   // printf("sign: %s\n", sign);
   // printf("pubKeyLen: %d\n", pubKeyLen);
   int isEd25519 = lua_toboolean(L, 6);
-  int r = verifyIt(sign, sSize, textToVerify, strlen(textToVerify), pubKey,
+  int r = ed25519rsa_verifyIt(sign, sSize, textToVerify, strlen(textToVerify), pubKey,
                    pubKeyLen, EVP_sha512(), isEd25519 ? ed25519 : aRSA);
   if (r < 0) {
     // printf("return zero");
@@ -151,19 +151,19 @@ int main(void) {
           fclose(myPrivKey1);
   }else fclose(tmp);
 
-  struct aKeyPair keyPair = initPrivKey("privkey.ed25519", ed25519);
-  struct aKeyPair rsaKeyPair = initPrivKey("privkey.rsa", aRSA);
+  struct aKeyPair keyPair = ed25519rsa_initPrivKey("privkey.ed25519", ed25519);
+  struct aKeyPair rsaKeyPair = ed25519rsa_initPrivKey("privkey.rsa", aRSA);
   printf("keyPair\n %s\n %s\n", keyPair.pubKey, keyPair.privKey);
   printf("rsaKeyPair\n %s\n %s\n", rsaKeyPair.pubKey, rsaKeyPair.privKey);
 
-  // size_t singIt(const char * plaintext,size_t plaintext_size, char* sigret,
+  // size_t x25519_signIt(const char * plaintext,size_t plaintext_size, char* sigret,
   // EVP_PKEY * key);
 
   const char msg[] =
       "test msg";
   char retbuf[1024];
   puts("Test RSA");
-  size_t sSize = singIt(msg, sizeof(msg), retbuf, rsaKeyPair.pkey,
+  size_t sSize = x25519_signIt(msg, sizeof(msg), retbuf, rsaKeyPair.pkey,
 EVP_sha512(),aRSA); printf("Sign data: %s\n", retbuf); char pubKey[1024]; size_t
 keySize; struct aKeyPair another_keyPair = generateKeysRSA(2048, 3, NULL);
   printf("aKeyPair\npub->%s\n priv->%s\n", another_keyPair.pubKey,
@@ -178,7 +178,7 @@ puts("not verified:("); puts("Set another key now...");
 another_keyPair.pubKeyLen, EVP_sha512(), aRSA); if(rtv > 0) puts("Verified!");
   else puts("not verified:(");
   puts("Test ed25519");
-  sSize = singIt(msg, sizeof(msg), retbuf, keyPair.pkey, EVP_sha512(),ed25519);
+  sSize = x25519_signIt(msg, sizeof(msg), retbuf, keyPair.pkey, EVP_sha512(),ed25519);
   struct aKeyPair another_keyPaired25519 = generateKeysEd25519(NULL);
 
   rtv =verifyIt(retbuf, sSize, msg, sizeof(msg), keyPair.pubKey,
