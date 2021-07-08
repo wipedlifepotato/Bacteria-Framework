@@ -25,10 +25,27 @@ struct x25519_keysPair x25519_createKeyPair(const uint8_t *priv, const uint8_t *
   ret.pKeyCtx = ctx;
   return ret;
 }
-
+#define BUFSIZE 256
 struct x25519_keysPair x25519_initKeyPairFromFile(const char * filepath){
 	struct x25519_keysPair rt;
 	FILE *keyfile = fopen(filepath, "rb");
+	size_t fs;
+	fseek(keyfile, SEEK_END, 0);
+	fs = ftell(keyfile);
+	fseek(keyfile, SEEK_SET, 0 );
+	if(fs == 0){
+		 fclose(keyfile);
+		 return rt;
+	}
+	char buf[BUFSIZE];
+	fread(buf, BUFSIZE, 1, keyfile);
+	fseek(keyfile, SEEK_SET, 0 );
+	if ( strstr(buf,"-----BEGIN PRIVATE KEY-----") == NULL){
+		//puts("Not found");
+		 fclose(keyfile);
+		 return rt;
+	}
+
 	if(keyfile == NULL) return rt;
 	//EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
 	EVP_PKEY *pkey = NULL;
