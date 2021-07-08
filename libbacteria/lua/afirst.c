@@ -4,6 +4,7 @@
 #include "libgmp.h"
 #include "libimages.h"
 #include "libjson.h"
+#include "libsockets.h"
 
 void runAllLuaFilesInDir(lua_State *L, const char *path) {
   DIR *dir;
@@ -51,6 +52,7 @@ lua_State *start_lua(void) {
   luaopen_libimages(L);
   luaopen_liblgmp(L);
   luaopen_libed25519rsa(L);
+  luaopen_lsocket(L);
   // luaopen_sql(L);
   // initLuaSubmodules(L, "./luasubmodules");
   lua_loadscript(L, init_lua_file_path);

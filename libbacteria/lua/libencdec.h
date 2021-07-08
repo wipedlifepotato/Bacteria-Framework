@@ -1,6 +1,9 @@
 #pragma once
 #include"encdec/AES.h"
 #include"encdec/x25519.h"
+#include<openssl/sha.h>
+#include"macros.h"
+
 #include "lua.h"
 
 #define MAXSIZEMSG 5012
@@ -22,6 +25,8 @@ INITLUAFUNC(getAESData_len);
 INITLUAFUNC(createAESData);
 INITLUAFUNC(getPubKey);
 INITLUAFUNC(getPrivKey);
+INITLUAFUNC(toSHA512);
+INITLUAFUNC(toSHA256);
 //INITLUAFUNC(setKeyPair);
 
 struct lua_AESData{
@@ -46,6 +51,8 @@ static const struct luaL_reg encdeclib [] = {
       LUAPAIR(createAESData)
       LUAPAIR(getPubKey)
       LUAPAIR(getPrivKey)
+      LUAPAIR(toSHA512)
+      LUAPAIR(toSHA256)
 //      LUAPAIR(setKeyPair)
       {NULL, NULL}
 };

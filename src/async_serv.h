@@ -1,4 +1,8 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>          /* See NOTES */
@@ -22,3 +26,7 @@ struct serv_arguments{
 };
 
 void serv_thread(struct serv_arguments * arguments);
+
+#ifdef __cplusplus
+}
+#endif

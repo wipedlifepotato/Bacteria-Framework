@@ -1,9 +1,11 @@
+
 #include "async_serv.h"
 #include "cryptocoins.h"
 #include "json_rpc.h"
 #include "lua/luaserv.h"
 #include "signal_handler.h"
-#include <pthread.h>
+
+#include <thread>
 #include <time.h>
 
 // extern int start_lua(void);
@@ -27,13 +29,12 @@ int main(int argc, char **argv) {
   puts("start server");
   pthread_t pthreadServ, pthreadLuaServ;
   struct serv_arguments args = {argv[1], atoi(argv[2]), cryptocoins};
-  void *(*mainserv_fun)(void *) = (void *)serv_thread;
-  void *(*luaserv_fun)(void *) = (void *)luaServer;
+  auto mainserv_fun = serv_thread;
+  auto luaserv_fun = luaServer;
+  //  void *(*mainserv_fun)(void *) =serv_thread;
+  //  void *(*luaserv_fun)(void *) = luaServer;
+  std::thread threadServ(mainserv_fun, &args);
 
-  if (pthread_create(&pthreadServ, NULL, mainserv_fun, (void *)&args) != 0) {
-    return eprintf("can't start thread!\n");
-  } else
-    puts("main server is inited");
   lua_State *L = start_lua();
   puts("start lua server");
   for (int i = 0; i < 10; i++)
@@ -41,14 +42,12 @@ int main(int argc, char **argv) {
 
   servArgs args_luaserv = {"127.0.0.1", 6566, L};
 
-  if (pthread_create(&pthreadLuaServ, NULL, luaserv_fun,
-                     (void *)&args_luaserv) != 0) {
-    return eprintf("can't start thread!\n");
-  } else
-    puts("lua serv inited");
+  std::thread threadLuaServ(luaserv_fun, &args_luaserv);
 
-  pthread_join(pthreadLuaServ, NULL);
-  pthread_join(pthreadServ, NULL);
+  threadLuaServ.join();
+  threadServ.join();
+  // pthread_join(pthreadLuaServ, NULL);
+  // pthread_join(pthreadServ, NULL);
 
   clear_cryptocoins(cryptocoins);
   lua_close(L);

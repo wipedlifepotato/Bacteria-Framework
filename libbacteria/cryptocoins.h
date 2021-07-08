@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 #pragma once
 #include<iniparser/iniparser.h>
 #include"macros.h"
@@ -23,4 +26,6 @@ uint getCountCryptocoins(void);
 uint setCountCryptocoins(uint);
 static uint count_cryptocoins=0;
 
-
+#ifdef __cplusplus
+}
+#endif

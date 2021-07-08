@@ -216,6 +216,17 @@ int lua_freeKeyPair(lua_State *L) {
 
 // int lua_freeSharedKey(lua_State *L) {}
 
+INITLUAFUNC(toSHA512) {
+  INITHASHFUNC(SHA512, 129);
+  lua_pushstring(L, outputstring);
+  return 1;
+}
+INITLUAFUNC(toSHA256) {
+  INITHASHFUNC(SHA256, 65);
+  lua_pushstring(L, outputstring);
+  return 1;
+}
+
 int lua_createKeyPair(lua_State *L) {
   uint8_t *pub = (uint8_t *)luaL_checkstring(L, 1);
   uint8_t *priv = (uint8_t *)luaL_checkstring(L, 2);

@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include<curl/curl.h>
 #include<stdlib.h>
 #include<string.h>
@@ -18,7 +21,7 @@ struct string {
 
 static void init_string(struct string *s) {
   s->len = 0;
-  s->ptr = malloc(s->len+1);
+  s->ptr = (char*)malloc(s->len+1);
   if (s->ptr == NULL) {
     fprintf(stderr, "malloc() failed\n");
     exit(EXIT_FAILURE);
@@ -27,7 +30,7 @@ static void init_string(struct string *s) {
 }
 static size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s){
   size_t new_len = s->len + size*nmemb;
-  s->ptr = realloc(s->ptr, new_len+1);
+  s->ptr = (char*)realloc(s->ptr, new_len+1);
   if (s->ptr == NULL) {
     fprintf(stderr, "realloc() failed\n");
     exit(EXIT_FAILURE);
@@ -42,6 +45,8 @@ json_t * brpc_json_request(struct cryptocoin * c, struct bitcoin_rpc_data * bdat
 json_t * brpc_prepare_params(char * data,...);
 void brpc_clear_bdata(struct bitcoin_rpc_data * data);
 void brpc_get_json(struct bitcoin_rpc_data * data);
-
+#ifdef __cplusplus
+}
+#endif
 
 
