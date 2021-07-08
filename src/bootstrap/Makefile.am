@@ -1,6 +1,6 @@
 AM_CFLAGS = 
 bin_PROGRAMS = bbootstrap-server
-bbootstrap_server_SOURCES = main.cpp utils.cpp opcodes.cpp serv.cpp
+bbootstrap_server_SOURCES = main.cpp ../net/utils.cpp ../net/opcodes.cpp serv.cpp
 #$(top_builddir)/libbacteria/lua/luaserv.c
 ibootstrap_server_DEPENDENCIES = $(top_builddir)/libbacteria/libbacteria.a
 bbootstrap_server_LDADD = $(top_builddir)/libbacteria/libbacteria.a -lluajit-5.1

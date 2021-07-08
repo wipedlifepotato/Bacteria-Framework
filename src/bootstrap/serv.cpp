@@ -1,5 +1,5 @@
 #include "serv.h"
-#include "opcodes.h"
+#include "../net/opcodes.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
