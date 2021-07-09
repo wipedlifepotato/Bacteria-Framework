@@ -24,6 +24,30 @@ extern "C" {
 #include"lua/lua.h"
 #define RSAKEYSIZE 8192
 #define RSAPRIMARYCOUNT 4
+#define doExit(...)                                                            \
+  {                                                                            \
+    eprintf(__VA_ARGS__);                                                      \
+    exit(EXIT_FAILURE);                                                        \
+  }
+
+#define FREEKEYPAIR(pair)                                                      \
+  if (pair.pkey != NULL) {                                                     \
+    EVP_PKEY_free(pair.pkey);                                                  \
+    free(pair.privKey);                                                        \
+    free(pair.pubKey);                                                         \
+  }
+
+#define FREEISNOTNULL(what)                                                    \
+  if (what != NULL)                                                            \
+    free(what);
+
+#define PUTPARAMS_(params)\
+	va_list ap;\
+	va_start(ap, params);
+
+#define PUTPARAMS()\
+	PUTSPARAMS_(params);
+
 
 typedef enum{
 	CON_UNC = 1<<0,
@@ -68,6 +92,24 @@ struct opcode{
 	peertype allowpeertypes;
 	bool need_encryption;
 };
+
+//funcs
+struct peer connect_to_peer(char *host, uint16_t port, int *sock_udp) ;
+struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
+                           peertype type, size_t mirrors_count, char *mirrors[],
+                           struct triad_keys *keys);
+void free_peer(struct peer *p);
+struct triad_keys generateSelfPeerKeys(const char *ed25519file,
+                                       const char *rsafile,
+                                       const char *x25519file);
+void peer_freeKeys(struct triad_keys *keys);
+struct triad_keys init_self_keys(const char *rsa_key_file,
+                                 const char *ed25519_key_file,
+                                 const char *x25519_privkey);
+void set_timeout(int socket, unsigned int tSec, unsigned int tUsec,
+                 bool isTCP);
+void getparams(lua_State * L, const char params[], va_list ap);
+
 #ifdef __cplusplus
 }
 #endif

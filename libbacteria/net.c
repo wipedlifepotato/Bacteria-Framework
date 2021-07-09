@@ -1,48 +1,6 @@
 #include "net.h"
 
-/*
-typedef enum{
-        CON_UNC = 1<<1,
-        CON_UDP=1<<2, CON_TCP=1<<3
-}contype;
-
-
-typedef enum{
-        PEER_USER = 1<<1,
-        PEER_SERVER=1<<2, PEER_BOOTSTRAP=1<<3
-}peertype;
-
-struct peer{
-        char * ip;
-        uint16_t port;
-        int sock;
-        contype allow_con;
-        peertype type;
-        char * shared_key; // with another peer
-        char * ed25519_key; // pub
-        char * x25519_key; // pub
-        char * rsa_key; // pub
-        char * identificator; // sha256 of pubkey x25519
-
-        char * host_mirrors[]; // i2p / onion / yggdrasil / etc mirrors.
-};
-*/
-
-#define doExit(...)                                                            \
-  {                                                                            \
-    eprintf(__VA_ARGS__);                                                      \
-    exit(EXIT_FAILURE);                                                        \
-  }
-
-#define FREEKEYPAIR(pair)                                                      \
-  if (pair.pkey != NULL) {                                                     \
-    EVP_PKEY_free(pair.pkey);                                                  \
-    free(pair.privKey);                                                        \
-    free(pair.pubKey);                                                         \
-  }
-
-//typedef void (*opcodefun)(lua_State * L, const char params[], ... );
-static void getparams(lua_State * L, const char params[], va_list ap){
+void getparams(lua_State * L, const char params[], va_list ap){
 	if(params == NULL) return;
 	size_t params_size = strlen(params);
 
@@ -156,28 +114,6 @@ struct triad_keys generateSelfPeerKeys(const char *ed25519file,
   }
   return rt;
 }
-/*
-struct peer{
-        struct sockaddr_in addr_in;
-        char * host;
-        uint16_t port;
-        int sock_tcp;
-        int sock_udp;
-        contype allow_con;
-        peertype type;
-        char * ed25519_key; // pub
-        char * x25519_key; // pub
-        char * rsa_key; // pub
-        char * identificator; // sha256 of pubkey x25519
-
-        size_t host_mirrors_count;
-        char * host_mirrors[]; // i2p / onion / yggdrasil / etc mirrors.
-        char * shared_key; // with another peer x25519
-};
-*/
-#define FREEISNOTNULL(what)                                                    \
-  if (what != NULL)                                                            \
-    free(what);
 
 void free_peer(struct peer *p) {
   FREEISNOTNULL(p->host);
@@ -313,4 +249,6 @@ struct peer connect_to_peer(char *host, uint16_t port, int *sock_udp) {
   if (rt.allow_con == CON_UNC)
     return rt;
   // connected trying to get keys and identificator
+ //TODO: exchange peers. timeout. + static struct opcode opcodes[] = { ... }
+ 
 }
