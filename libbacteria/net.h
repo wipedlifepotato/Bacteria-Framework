@@ -21,6 +21,9 @@ extern "C" {
 #include"encdec/AES.h"
 #include"encdec/hashes.h"
 #include"macros.h"
+#include"lua/lua.h"
+#define RSAKEYSIZE 8192
+#define RSAPRIMARYCOUNT 4
 
 typedef enum{
 	CON_UNC = 1<<0,
@@ -56,6 +59,14 @@ struct peer{
 	char * identificator; // sha256 of pubkey x25519
 	size_t host_mirrors_count;
 	char ** host_mirrors; // i2p / onion / yggdrasil / etc mirrors.
+};
+
+typedef void (*opcodefun)(lua_State * L, const char params[], ... );
+struct opcode{
+	char opcode[4];
+	opcodefun fun;
+	peertype allowpeertypes;
+	bool need_encryption;
 };
 #ifdef __cplusplus
 }
