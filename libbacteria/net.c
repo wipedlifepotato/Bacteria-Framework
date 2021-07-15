@@ -34,8 +34,7 @@ void getparams(lua_State * L, const char params[], va_list ap){
 	va_end(ap);
 }
 
-void set_timeout(int socket, unsigned int tSec, unsigned int tUsec,
-                 bool isTCP) {
+void set_timeout(int socket, unsigned int tSec, unsigned int tUsec) {
   struct timeval tv;
   tv.tv_sec = tSec;
   tv.tv_usec = tUsec;
@@ -62,7 +61,7 @@ struct triad_keys init_self_keys(const char *rsa_key_file,
   return rt;
 }
 
-void peer_freeKeys(struct triad_keys *keys) {
+void peer_freeKeys(struct triad_keys *keys) { // selfkeys pub+sec
   FREEKEYPAIR((keys->ed25519));
   FREEKEYPAIR((keys->rsa));
   if (keys->x25519.privKey != NULL)
@@ -136,14 +135,16 @@ struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
 
   if (allow_con & CON_TCP == CON_TCP)
     rt.sock_tcp = socket(AF_INET, SOCK_STREAM, 0);
+
   if (allow_con & CON_TCP == CON_UDP)
-    rt.sock_udp = socket(AF_INET, SOCK_DGRAM, 0);
+    *rt.sock_udp = socket(AF_INET, SOCK_DGRAM, 0);
+
   if ((rt.sock_tcp <= 0 && allow_con & CON_TCP == CON_TCP) ||
-      (rt.sock_udp <= 0 && allow_con & CON_UDP == CON_UDP)) {
+      (*rt.sock_udp <= 0 && allow_con & CON_UDP == CON_UDP)) {
     if (rt.sock_tcp > 0)
       close(rt.sock_tcp);
-    if (rt.sock_udp > 0)
-      close(rt.sock_udp);
+    if (*rt.sock_udp > 0)
+      close(*rt.sock_udp);
     fprintf(stderr, "Can't init sockets\n");
     return rt;
   }
@@ -166,7 +167,7 @@ struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
   }
 
   if (allow_con & CON_UDP == CON_UDP) {
-    ret = bind(rt.sock_udp, (struct sockaddr *)&my_addr,
+    ret = bind(*rt.sock_udp, (struct sockaddr *)&my_addr,
                sizeof(struct sockaddr_in));
     if (ret == -1) {
       doExit("Can't init bind on (UDP) %s:%d\n", host, port);
@@ -181,7 +182,7 @@ struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
   host[host_s] = 0;
   rt.allow_con = allow_con;
   rt.type = type;
-  rt.isSelf = true;
+ // rt.isSelf = true;
 
   size_t sed25519 = strlen(keys->ed25519.pubKey);
   size_t srsa = strlen(keys->rsa.pubKey);
@@ -217,6 +218,149 @@ struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
   return rt;
 }
 
+char **split_msg(char *buf, const char schar, size_t *splitted_size,
+                 size_t msg_len) {
+  /*
+   */
+  const unsigned long long max_splitted = 120;
+  size_t arr_size = 0;
+  char **splitted;
+  splitted = (char **)malloc(sizeof(char *) * arr_size);
+  if (!splitted)
+    abort();
+  char *str;
+  char str2[msg_len];
+  do {
+    bzero(str2, msg_len);
+    str = strchr(buf, schar);
+
+    if (str != NULL || (str = strchr(buf, '\r')) != NULL) {
+      arr_size++;
+      splitted = (char **)realloc(splitted, sizeof(char *) * arr_size);
+      if (!splitted)
+        abort();
+
+      memcpy(str2, buf, (str - buf));
+      // printf("str2 = %s\n", str2);
+
+      splitted[arr_size - 1] = (char *)malloc(sizeof(char) * strlen(str2) + 1);
+      if (!splitted[arr_size - 1])
+        abort();
+
+      strcpy(splitted[arr_size - 1], str2);
+      splitted[arr_size - 1][strlen(str2)] = 0;
+    }
+    buf = str + 1;
+  } while (str != NULL && arr_size < max_splitted);
+  *splitted_size = arr_size;
+
+  return splitted;
+}
+
+void free_splitted(char **what, size_t n) {
+  for (n; n--;) {
+    if (n == 0)
+      break;
+    if (what[n][0] == 0)
+      continue;
+    free((void *)(what[n - 1]));
+  }
+  free((void *)what);
+}
+
+
+// fsplitter = '='; ssplitter=';' will be by default
+char ** unpackData(char * data, size_t * rt_size, char fsplitter, char ssplitter){
+
+}
+
+char * join_data(const char * a, const char *b, const char split_char){
+	size_t sA = strlen(a);
+	size_t sB = strlen(b);
+//	size_t lSize = 0;
+	char * ret = malloc(sizeof(char) * (sA+sB)+3); // ';' + ';' + \0
+	memcpy(ret, a, sA);
+//	lSize += sA;
+	ret[sA]=split_char;
+//	lSize++;
+	memcpy((ret+sA+1), b, sB); // plus ';'
+//	lSize+=sB;
+	ret[sA+sB+1] = split_char;
+//	lSize++; 
+	ret[sA+sB+2] = '\0'; //plus ';' + ';'
+	return ret;
+}
+
+char * join_addresses(const char * addr, ...){
+
+	va_list ap;
+	va_start(ap, addr);
+	size_t cSize = strlen(addr);
+	char * pRet = malloc(cSize+1*sizeof(char));//sizeof of char is 1 on must of OS
+	//void * fRet = pRet;
+	//bzero(pRet, cSize);
+	strcpy(pRet, addr);
+	pRet[cSize] = SPLITADDRCHAR;
+
+	addr = va_arg(ap, char*);
+
+	while( addr != NULL ){
+		size_t addr_size =strlen(addr)+1;
+		pRet = (char*)realloc( pRet, ( addr_size+ cSize + 1) * sizeof(char) );
+		memcpy(pRet+cSize+1, addr, addr_size);
+		cSize+=addr_size;
+		pRet[cSize] = SPLITADDRCHAR;
+		addr = va_arg(ap, char*);
+
+	}
+
+	pRet = realloc(pRet,cSize + 1);
+	pRet[cSize] = '\0';
+	return	pRet;
+
+}
+/*
+struct opcode{
+	char opcode[OPCODELEN];
+	opcodefun fun;
+	peertype allowpeertypes;
+	bool need_encryption;
+};
+*/
+static const struct opcode InitOpcode =
+
+	{
+	        {0x01,0x02,0x03,0x04},
+		NULL,
+		ALLTYPESPERR,
+		false
+	};
+
+
+
+void init_talk(struct peer * p, bool isUDP){
+	
+	set_timeout(p->sock_tcp,12, 0);
+ 	set_timeout( *(p->sock_udp),12, 0);
+	char buf[NETDATASIZE];
+	size_t ret_size;
+	if(!isUDP){
+		ret_size = recv(p->sock_tcp,  buf, NETDATASIZE, O_NONBLOCK);
+	}else{
+		ret_size = recv( *(p->sock_udp),  buf, NETDATASIZE, O_NONBLOCK);
+	}
+	if(ret_size <= 0) return;
+	buf[ret_size]=0;
+	//
+}
+
+#define INITTALKPRE(rt,T)\
+	rt.sock_tcp = sock_tcp;\
+	rt.sock_udp = sock_udp;\
+	rt.addr_in=addr;\
+	init_talk(&rt, T);\
+	if(rt.identificator == NULL){ free_peer(&rt); close(rt.sock_tcp);close( *(rt.sock_udp) );rt.sock_tcp=0;rt.sock_udp=0; }
+	
 struct peer connect_to_peer(char *host, uint16_t port, int *sock_udp) {
   struct peer rt;
   if (sock_udp == NULL || *sock_udp == 0) {
@@ -248,7 +392,32 @@ struct peer connect_to_peer(char *host, uint16_t port, int *sock_udp) {
   }
   if (rt.allow_con == CON_UNC)
     return rt;
-  // connected trying to get keys and identificator
- //TODO: exchange peers. timeout. + static struct opcode opcodes[] = { ... }
+  // connected trying to get keys and set identificator by the key.
+ //TODO: exchange peers. timeout. 
+ set_timeout(sock_tcp,1, 0);
+ set_timeout(*sock_udp,1, 0);
+ char buf[OPCODELEN];
+ size_t ret_size = recv(sock_tcp,  buf, OPCODELEN, O_NONBLOCK);
+{
+ size_t sh = strlen(host);
+ rt.host = malloc(sizeof(char)*sh+1);
+ strcpy(rt.host, host);
+ rt.host[sh] = 0;
+}
+ if(ret_size == OPCODELEN && strncmp(buf, InitOpcode.opcode, OPCODELEN) == 0){ // SUC TCP
+	INITTALKPRE(rt, false);
+	return rt;
+ }else{
+	ret_size = recv(*sock_udp, buf, OPCODELEN, O_NONBLOCK);
+	if(ret_size == OPCODELEN && strncmp(buf, InitOpcode.opcode, OPCODELEN) == 0){
+		INITTALKPRE(rt, true);
+		return rt;
+        } //suc UDP
+	else{
+		close(sock_tcp);
+		close(*sock_udp);
+		return rt;
+	}// all bad
+ }
  
 }

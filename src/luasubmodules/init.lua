@@ -153,7 +153,7 @@ end
 -- color['alpha'] = 0	color['blue']=0
 -- gd:new(120,120,50,color)
 -- in another parts color is will be INT color
-local function checkGD(width,height,quality,color)
+local function checkGD(gdbusedraw,width,height,quality,color)
 	img = gd:new(width,height,quality,color)
 	print("initImage")
 	img:initImage() -- can get background color, int not array
@@ -181,15 +181,15 @@ local function checkGD(width,height,quality,color)
 	--can take defFont
 	--12 and 15 is ptSize; 0.5 and -0.2 is angle; width/2 is x;... height/2 is y;
 	print("drawText")
-	img:drawText("HelloTTF", width/2,height/2, randColor1, 12, 0.5, "./fonts/dummy.ttf")
-	img:drawText("hello ttf", width/3, height/3, randColor1, 15, -0.2) 
+	img:drawText("zdarova ilia", width/2,height/2, randColor1, 12, 0.5, "./fonts/dummy.ttf")
+	img:drawText("iluha drov", width/3, height/3, randColor1, 15, -0.2) 
 	
 	print("save to file test.jpg")
 --function obj:setQuality(q) ; so img:setQuality(100) for 100 quality before save; getQuality for get current quality
 	img:saveToFile("test.jpg")
 	rawdata, size_rawdata = img:getRawImage()
 	print("Size of img: ", size_rawdata)
-	print("RawData: ", rawdata) 
+	if gdbusedraw then print("RawData: ", rawdata) end
 	img:clear()
 end
 local function GMPTEST()
@@ -341,6 +341,11 @@ checkEd25519rsa ()
 GMPTEST()
 CryptocoinsTest()
 EncDecTest()
-checkGD(120,120,100,color)
 
+gdbusedraw=false
+checkGD(gdbusedraw,120,120,100,color)
+
+--print( lnet.join_addresses("1", "23", "dcba", "abcd","127.0.0.1","192.168.0.0.1", "ffff:ffff:fff:ffff:fffffff") )
+--print(lnet.join_data("0.0.0.0","1.1.1.1") )
+--print(lnet.join_data("30203032023","3040320", ',') )
 

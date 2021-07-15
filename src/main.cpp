@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
 
   lua_State *L = start_lua();
   puts("start lua server");
-  for (int i = 0; i < 10; i++)
-    checkRetVal(L, i);
+  //for (int i = 0; i < 10; i++)
+  //  checkRetVal(L, i);
 
   servArgs args_luaserv = {"127.0.0.1", 6566, L};
 

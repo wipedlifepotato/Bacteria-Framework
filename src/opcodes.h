@@ -5,7 +5,7 @@
 namespace opcode{
 	constexpr short opcode_size = 4;
 	constexpr auto ignorebyte = 0x0E;
-	constexpr auto splitbyte = 0x0F;
+	constexpr auto splitbyte = 0x03;
 	using eventfun = events::fun;
 	using opcode_data = std::array<char, opcode_size>;
 
