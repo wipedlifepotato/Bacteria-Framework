@@ -345,6 +345,14 @@ EncDecTest()
 gdbusedraw=false
 checkGD(gdbusedraw,120,120,100,color)
 
+
+mytable={key="value", sdfasdf=123, s03="321"}
+mytable["p1"]="e"
+packed = lnet.packData(mytable)
+print("Packed - ", packed)
+unpacked = lnet.unpackData(packed)
+print("Upacked: ",unpacked["key"], unpacked["sdfasdf"], unpacked.s03)
+--todo check lnet. sockets funcs
 --print( lnet.join_addresses("1", "23", "dcba", "abcd","127.0.0.1","192.168.0.0.1", "ffff:ffff:fff:ffff:fffffff") )
 --print(lnet.join_data("0.0.0.0","1.1.1.1") )
 --print(lnet.join_data("30203032023","3040320", ',') )

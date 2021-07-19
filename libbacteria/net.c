@@ -1,221 +1,10 @@
 #include "net.h"
 
-void getparams(lua_State * L, const char params[], va_list ap){
-	if(params == NULL) return;
-	size_t params_size = strlen(params);
-
-	//va_list ap;
-	//va_start(ap, params);
-
-	while(*params){
-		switch(*(params++)){
-			case 'i':
-				lua_pushnumber(L, va_arg(ap, double));
-				break;
-			case 's':
-				lua_pushstring(L,va_arg(ap, char*));
-			case 'b':
-				lua_pushboolean(L, va_arg(ap, int));
-			case 'm':
-				LUA_PUSHTABLESTRING(L, va_arg(ap, char*), va_arg(ap, char*));
-				break;
-			case 'g'://map but number
-				LUA_PUSHTABLENUMBER(L, va_arg(ap, char*), va_arg(ap, int));
-				break;
-			case 'n':
-				lua_pushnil(L);// void* v = va_arg(ap, void*);
-				break;
-			default:
-				fprintf(stderr,"GETPERAMS WARNING: undetifned type\n");
-				break;
-		}
-	}
-
-	va_end(ap);
-}
-
 void set_timeout(int socket, unsigned int tSec, unsigned int tUsec) {
   struct timeval tv;
   tv.tv_sec = tSec;
   tv.tv_usec = tUsec;
   setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv);
-}
-
-struct triad_keys init_self_keys(const char *rsa_key_file,
-                                 const char *ed25519_key_file,
-                                 const char *x25519_privkey) {
-  struct triad_keys rt;
-  rt.ed25519 = ed25519rsa_initPrivKey(ed25519_key_file, ed25519);
-  rt.rsa = ed25519rsa_initPrivKey(rsa_key_file, aRSA);
-  rt.x25519 = x25519_initKeyPairFromFile(x25519_privkey);
-  if (rt.ed25519.privKey == NULL || rt.rsa.privKey == NULL ||
-      rt.x25519.privKey == NULL) {
-    fprintf(stderr, "can't init some of keys\n");
-    FREEKEYPAIR(rt.ed25519);
-    FREEKEYPAIR(rt.rsa);
-    if (rt.x25519.privKey != NULL)
-      x25519_freeKeyPair(&rt.x25519);
-    struct triad_keys null;
-    return null;
-  }
-  return rt;
-}
-
-void peer_freeKeys(struct triad_keys *keys) { // selfkeys pub+sec
-  FREEKEYPAIR((keys->ed25519));
-  FREEKEYPAIR((keys->rsa));
-  if (keys->x25519.privKey != NULL)
-    x25519_freeKeyPair(&keys->x25519);
-}
-
-struct triad_keys generateSelfPeerKeys(const char *ed25519file,
-                                       const char *rsafile,
-                                       const char *x25519file) {
-  struct triad_keys rt;
-
-  FILE *exitFileEd25519 =
-      fopen(ed25519file == NULL ? "ed25519.key" : ed25519file, "wb");
-  if (exitFileEd25519 == NULL) {
-    fprintf(stderr, "Can't open exit file ed25519\n");
-    return rt;
-  }
-  FILE *exitFileRSA = fopen(rsafile == NULL ? "rsa.key" : rsafile, "wb");
-  if (exitFileRSA == NULL) {
-    fclose(exitFileRSA);
-    fprintf(stderr, "Can't open exitFileRSA\n");
-    return rt;
-  }
-
-  rt.x25519 = x25519_generateKeyPair();
-
-  int r = x25519_savePrivKey(x25519file == NULL ? "x25519.key" : x25519file,
-                             &rt.x25519);
-  // is can be stealed from RAM. is because is will be readed every time now and
-  // now.
-  if (r == -1) {
-    fprintf(stderr, "Can't save x25519 priv key to %s\n", x25519file);
-    peer_freeKeys(&rt);
-    fclose(exitFileRSA);
-    fclose(exitFileEd25519);
-    return rt;
-  }
-
-  rt.ed25519 = generateKeysEd25519(exitFileEd25519);
-  rt.rsa = generateKeysRSA(RSAKEYSIZE, RSAPRIMARYCOUNT, exitFileRSA);
-
-  fclose(exitFileEd25519);
-  fclose(exitFileRSA);
-
-  if (rt.ed25519.privKey == NULL || rt.rsa.privKey == NULL) {
-    struct triad_keys nullrt;
-    peer_freeKeys(&rt);
-    return nullrt;
-  }
-  return rt;
-}
-
-void free_peer(struct peer *p) {
-  FREEISNOTNULL(p->host);
-  FREEISNOTNULL(p->ed25519_key);
-  FREEISNOTNULL(p->x25519_key);
-  FREEISNOTNULL(p->rsa_key);
-  FREEISNOTNULL(p->identificator);
-  FREEISNOTNULL(p->shared_key);
-  for (unsigned int i = 0; i < p->host_mirrors_count; i++) {
-    FREEISNOTNULL(p->host_mirrors[i]);
-  }
-  FREEISNOTNULL(p->host_mirrors);
-}
-
-struct peer init_self_peer(char *host, uint16_t port, contype allow_con,
-                           peertype type, size_t mirrors_count, char *mirrors[],
-                           struct triad_keys *keys) {
-  struct peer rt;
-  assert(allow_con & CON_TCP == CON_TCP || allow_con & CON_UDP == CON_UDP);
-
-  if (allow_con & CON_TCP == CON_TCP)
-    rt.sock_tcp = socket(AF_INET, SOCK_STREAM, 0);
-
-  if (allow_con & CON_TCP == CON_UDP)
-    *rt.sock_udp = socket(AF_INET, SOCK_DGRAM, 0);
-
-  if ((rt.sock_tcp <= 0 && allow_con & CON_TCP == CON_TCP) ||
-      (*rt.sock_udp <= 0 && allow_con & CON_UDP == CON_UDP)) {
-    if (rt.sock_tcp > 0)
-      close(rt.sock_tcp);
-    if (*rt.sock_udp > 0)
-      close(*rt.sock_udp);
-    fprintf(stderr, "Can't init sockets\n");
-    return rt;
-  }
-  struct sockaddr_in my_addr;
-  socklen_t addr_l = sizeof(my_addr);
-  my_addr.sin_family = AF_INET;
-  my_addr.sin_port = htons(port);
-  my_addr.sin_addr.s_addr = inet_addr(host);
-
-  int ret;
-  if (allow_con & CON_TCP == CON_TCP) {
-    ret = bind(rt.sock_tcp, (struct sockaddr *)&my_addr,
-               sizeof(struct sockaddr_in));
-    if (ret == -1) {
-
-      doExit("Can't init bind on (TCP) %s:%d\n", host, port);
-    }
-    if (listen(rt.sock_tcp, MAX_LISTEN) == -1)
-      doExit("Cant start listening (TCP) \n");
-  }
-
-  if (allow_con & CON_UDP == CON_UDP) {
-    ret = bind(*rt.sock_udp, (struct sockaddr *)&my_addr,
-               sizeof(struct sockaddr_in));
-    if (ret == -1) {
-      doExit("Can't init bind on (UDP) %s:%d\n", host, port);
-    }
-  }
-
-  rt.addr_in = my_addr;
-  rt.port = port;
-  size_t host_s = strlen(host);
-  rt.host = malloc(sizeof(char) * host_s + 1);
-  memcpy(rt.host, host, host_s);
-  host[host_s] = 0;
-  rt.allow_con = allow_con;
-  rt.type = type;
- // rt.isSelf = true;
-
-  size_t sed25519 = strlen(keys->ed25519.pubKey);
-  size_t srsa = strlen(keys->rsa.pubKey);
-
-  rt.ed25519_key = malloc(sizeof(char) * sed25519 + 1);
-  memcpy(rt.ed25519_key, keys->ed25519.pubKey, sed25519);
-  rt.ed25519_key[sed25519] = 0;
-
-  rt.rsa_key = malloc(sizeof(char) * srsa + 1);
-  memcpy(rt.rsa_key, keys->rsa.pubKey, srsa);
-  rt.rsa_key[srsa] = 0;
-
-  rt.x25519_key = malloc(sizeof(char) * strlen(keys->x25519.pubKey) + 1);
-  memcpy(rt.x25519_key, keys->x25519.pubKey, 32);
-  rt.x25519_key[32] = 0;
-
-  char hashOfKey[SHA256_OUTPUTSTRING_SIZE];
-  toSHA256(rt.x25519_key, hashOfKey);
-  rt.identificator = malloc(sizeof(char) * SHA256_OUTPUTSTRING_SIZE);
-  memcpy(rt.identificator, hashOfKey, SHA256_OUTPUTSTRING_SIZE);
-  rt.identificator[SHA256_OUTPUTSTRING_SIZE - 1] = 0;
-
-  if (mirrors_count > 0) {
-    rt.host_mirrors_count = mirrors_count;
-    rt.host_mirrors = malloc(sizeof(char *) * mirrors_count + 1);
-    for (unsigned int i = mirrors_count - 1; i--;) {
-      size_t ms = strlen(mirrors[i]);
-      rt.host_mirrors[i] = malloc(sizeof(char) * ms);
-      memcpy(rt.host_mirrors[i], mirrors[i], ms);
-    }
-    rt.host_mirrors[mirrors_count] = 0;
-  }
-  return rt;
 }
 
 char **split_msg(char *buf, const char schar, size_t *splitted_size,
@@ -269,9 +58,92 @@ void free_splitted(char **what, size_t n) {
 }
 
 
-// fsplitter = '='; ssplitter=';' will be by default
-char ** unpackData(char * data, size_t * rt_size, char fsplitter, char ssplitter){
+char * packData(char ** dataKeys, char ** dataValues, char fsplitter, char ssplitter){
 
+	char ** pKeys = dataKeys;
+	char ** pValues = dataValues;
+
+	if(dataKeys[0] == NULL || dataValues[0] == NULL) return NULL;
+
+
+	
+	size_t sRet = 0; //
+	char * rVal = malloc(sizeof(char)*2);
+	if(rVal == NULL) return NULL;
+	for(unsigned long i = 0; pKeys[i] != NULL && pValues[i] != NULL; i++){
+		//strcat(sRet,dataKeys[i]);
+
+		const size_t KeySize = strlen(dataKeys[i]);
+		const size_t ValSize = strlen(dataValues[i]);
+		const size_t fullSize = KeySize + ValSize + 2;
+		rVal = realloc( rVal, (sRet+fullSize) * sizeof(char) );
+
+		strcpy(rVal+sRet, dataKeys[i]);
+
+		rVal[KeySize+sRet]=fsplitter;
+
+		strcpy(rVal+KeySize+1+sRet, dataValues[i]);
+
+		rVal[KeySize+1+ValSize+sRet] = ssplitter;
+
+		sRet+=fullSize;
+	}
+	sRet++;
+	rVal = realloc( rVal, (sRet) * sizeof(char) );
+	rVal[sRet]=0;
+	return (char*)rVal;
+}
+
+// fsplitter = '='; ssplitter=';' will be by default
+
+char ** unpackData(char * data, size_t * rt_size, char fsplitter, char ssplitter){
+	void * dFirst = data;
+	size_t count_sSplitter = 0;
+	size_t count_fSplitter = 0;
+	size_t sData = 0;
+	while(*data){
+		if(*(data) == fsplitter) count_fSplitter++;
+		else if( *data == ssplitter) count_sSplitter++;
+		data++;
+		sData++;
+	}
+
+	if(count_sSplitter != count_fSplitter ) return NULL;// TODO: maybe another way.
+	data = (char*)dFirst;
+	size_t f_split_size, s_split_size;
+
+	char ** ssplitted = split_msg( data, ssplitter, &s_split_size, sData );
+	char ** rVal = malloc( sizeof(char**) * (*rt_size) );	
+	unsigned int z=0;
+	*rt_size=s_split_size*2;
+	for(unsigned int i = s_split_size;i--;){
+		char * fs = strchr(ssplitted[i], fsplitter);
+		char * ptrFirst = ssplitted[i];
+		char * ptrLast = &ssplitted[i][strlen(ssplitted[i])];
+		if(fs == NULL) {
+			rVal[z] = (char*)malloc(sizeof(char));
+			rVal[z][0] = IGNOREINFOBYTE;
+			rVal[z+1] = (char*)malloc(sizeof(char));
+			rVal[z+1][0] = IGNOREINFOBYTE;
+			z+=2;
+			continue;
+		}
+		size_t s1=( fs - ptrFirst  ), s2= (ptrLast - fs);
+
+		rVal[z] = malloc(sizeof(char) * s1+1);
+		rVal[z+1] = malloc(sizeof(char) * s2 +1);
+		bzero(rVal[z], s1+1);
+		bzero(rVal[z+1],s2+1);
+		memcpy(rVal[z], ptrFirst, s1);
+		memcpy(rVal[z+1], fs+1, s2);
+//		rVal[z][( ptrFirst - fs )+1] = '\0';
+//		rVal[z+1][( ptrLast - fs )+1] = '\0';
+		//printf("rval; %s = %s\n", rVal[z], rVal[z+1]);
+		z+=2;
+	}
+
+	free_splitted(ssplitted, s_split_size);
+	return rVal;
 }
 
 char * join_data(const char * a, const char *b, const char split_char){
@@ -318,106 +190,4 @@ char * join_addresses(const char * addr, ...){
 	pRet[cSize] = '\0';
 	return	pRet;
 
-}
-/*
-struct opcode{
-	char opcode[OPCODELEN];
-	opcodefun fun;
-	peertype allowpeertypes;
-	bool need_encryption;
-};
-*/
-static const struct opcode InitOpcode =
-
-	{
-	        {0x01,0x02,0x03,0x04},
-		NULL,
-		ALLTYPESPERR,
-		false
-	};
-
-
-
-void init_talk(struct peer * p, bool isUDP){
-	
-	set_timeout(p->sock_tcp,12, 0);
- 	set_timeout( *(p->sock_udp),12, 0);
-	char buf[NETDATASIZE];
-	size_t ret_size;
-	if(!isUDP){
-		ret_size = recv(p->sock_tcp,  buf, NETDATASIZE, O_NONBLOCK);
-	}else{
-		ret_size = recv( *(p->sock_udp),  buf, NETDATASIZE, O_NONBLOCK);
-	}
-	if(ret_size <= 0) return;
-	buf[ret_size]=0;
-	//
-}
-
-#define INITTALKPRE(rt,T)\
-	rt.sock_tcp = sock_tcp;\
-	rt.sock_udp = sock_udp;\
-	rt.addr_in=addr;\
-	init_talk(&rt, T);\
-	if(rt.identificator == NULL){ free_peer(&rt); close(rt.sock_tcp);close( *(rt.sock_udp) );rt.sock_tcp=0;rt.sock_udp=0; }
-	
-struct peer connect_to_peer(char *host, uint16_t port, int *sock_udp) {
-  struct peer rt;
-  if (sock_udp == NULL || *sock_udp == 0) {
-    *sock_udp = socket(AF_INET, SOCK_DGRAM, 0);
-  }
-  int sock_tcp = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock_tcp <= 0 || *sock_udp <= 0) {
-    fprintf(stderr, "Can't init sockets!!!\n");
-    return rt;
-  }
-  struct sockaddr_in addr;
-  socklen_t addr_l = sizeof(addr);
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(host);
-
-  int ret = connect(*sock_udp, (struct sockaddr *)&addr, addr_l);
-  if (ret >= 0)
-    rt.allow_con = (rt.allow_con | CON_UDP);
-  else {
-    // fprintf("INIT_PEER: %s:%d UNALLOW UDP\n");
-    close(*sock_udp);
-  }
-  ret = connect(sock_tcp, (struct sockaddr *)&addr, addr_l);
-  if (ret >= 0)
-    rt.allow_con = (rt.allow_con | CON_TCP);
-  else {
-    close(sock_tcp);
-  }
-  if (rt.allow_con == CON_UNC)
-    return rt;
-  // connected trying to get keys and set identificator by the key.
- //TODO: exchange peers. timeout. 
- set_timeout(sock_tcp,1, 0);
- set_timeout(*sock_udp,1, 0);
- char buf[OPCODELEN];
- size_t ret_size = recv(sock_tcp,  buf, OPCODELEN, O_NONBLOCK);
-{
- size_t sh = strlen(host);
- rt.host = malloc(sizeof(char)*sh+1);
- strcpy(rt.host, host);
- rt.host[sh] = 0;
-}
- if(ret_size == OPCODELEN && strncmp(buf, InitOpcode.opcode, OPCODELEN) == 0){ // SUC TCP
-	INITTALKPRE(rt, false);
-	return rt;
- }else{
-	ret_size = recv(*sock_udp, buf, OPCODELEN, O_NONBLOCK);
-	if(ret_size == OPCODELEN && strncmp(buf, InitOpcode.opcode, OPCODELEN) == 0){
-		INITTALKPRE(rt, true);
-		return rt;
-        } //suc UDP
-	else{
-		close(sock_tcp);
-		close(*sock_udp);
-		return rt;
-	}// all bad
- }
- 
 }

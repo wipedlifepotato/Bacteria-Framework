@@ -22,12 +22,15 @@ extern "C" {
 #include"encdec/hashes.h"
 #include"macros.h"
 #include"lua/lua.h"
+#define SPLITADDRCHAR ';'
+#define FSPLITTERCHAR '='
+#define IGNOREINFOBYTE 0x03
+/*
 #define RSAKEYSIZE 8192
 #define RSAPRIMARYCOUNT 4
 
-#define SPLITADDRCHAR ';'
 #define SPLITINFOCHAR 0x1E
-#define IGNOREINFOBYTE 0x03
+
 
 #define OPCODELEN 4
 #define NETDATASIZE 1024
@@ -125,6 +128,7 @@ void peer_freeKeys(struct triad_keys *keys);
 struct triad_keys init_self_keys(const char *rsa_key_file,
                                  const char *ed25519_key_file,
                                  const char *x25519_privkey);
+*/
 void set_timeout(int socket, unsigned int tSec, unsigned int tUsec);
 
 void getparams(lua_State * L, const char params[], va_list ap);
@@ -141,6 +145,7 @@ free_splitted(char  ** what, size_t n);
 
 // fsplitter = '='; ssplitter=';' will be by default
 char ** unpackData(char * data, size_t * rt_size, char fsplitter, char ssplitter);
+char * packData(char ** dataKeys, char ** dataValues, char fsplitter, char ssplitter);
 #ifdef __cplusplus
 }
 #endif
