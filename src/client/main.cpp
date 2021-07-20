@@ -66,9 +66,9 @@ struct sock_data {
   }
   int write(std::string data, bool isTCP = false) {
     int tmp = isTCP ? *m_sock_tcp : *m_sock_udp;
-    if (isTCP && (m_contype & con_type::tcp != con_type::tcp))
+    if (isTCP && ((m_contype & con_type::tcp) != con_type::tcp))
       throw("TCP with peer unnallowed");
-    if (!isTCP && (m_contype & con_type::udp != con_type::udp))
+    if (!isTCP && ((m_contype & con_type::udp) != con_type::udp))
       throw("UDP with peer unnallowed");
     int c = sendto(tmp, data.c_str(), data.size(), 0, (struct sockaddr *)&m_adr,
                    m_adr_l);

@@ -37,7 +37,7 @@ int luaServInit(servArgs *args) {
   }
   if (listen(sock, LUAMAXLISTEN) == -1) {
     close(sock);
-    fprintf(stderr, "cant listen %d users for lua server\n");
+    fprintf(stderr, "cant listen %d users for lua server\n", LUAMAXLISTEN);
     return 0;
   }
   return sock;

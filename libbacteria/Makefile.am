@@ -6,5 +6,5 @@ libbacteria_a_SOURCES = cryptocoins.c  cryptocoins.h  json_rpc.c  lua/utils.c \
 			encdec/async/x25519.c encdec/sync/AES.c encdec/verify/rsa_ed25519.c encdec/verify/base64.c encdec/hashes.c \ 
 			images/images.c net.c \
 			lua/luaserv.c
-libbacteria_a_CFLAGS = -g -I /usr/include/luajit-2.1/ -I$(topdir)/libbacteria/ -I$(topdir)/luasql/src -L$(topdir)/luasql/src -I/usr/include/lua5.1/
+libbacteria_a_CFLAGS = -g -I /usr/include/luajit-2.1/ -I$(topdir)/libbacteria/ -I$(topdir)/luasql/src -I/usr/include/lua5.1/ -Wno-pointer-sign
 

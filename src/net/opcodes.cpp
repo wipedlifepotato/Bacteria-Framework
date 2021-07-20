@@ -28,7 +28,7 @@ void event1(lua_State *L, int sock, const char *uIp, uint16_t uPort, char *buf,
     printf("(check retval[lua]) Ret val: %s\n", lua_tostring(L, -1));
     sprintf((char *)retdata, "%s", lua_tostring(L, -1));
   } else {
-    sprintf((char *)retdata, "%d", lua_tonumber(L, -1));
+    sprintf((char *)retdata, "%d", (int)lua_tonumber(L, -1));
     printf("(check retval[lua]) Ret val (num): %d\n", (int)lua_tonumber(L, -1));
   }
   lua_pop(L, 1);

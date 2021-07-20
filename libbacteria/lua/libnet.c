@@ -252,7 +252,7 @@ INITLUAFUNC(packData){
 		dataKeys[i] = (char*)malloc(sizeof(char) * strlen(key)+1);
 		strcpy(dataKeys[i], key);
 		char numstr[256];
-		sprintf(numstr, "%f%c", numstr, '\0');
+		sprintf(numstr, "%f%c", value, '\0');
 		dataValues[i] = (char*)malloc(sizeof(char) * strlen(numstr)+1);
 		strcpy(dataValues[i], numstr);
 		i++;
