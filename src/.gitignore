@@ -10,7 +10,7 @@ Makefile.in
 .deps/
 .dirstamp
 src/.deps/
-
+gcm.cache
 # http://www.gnu.org/software/autoconf
 
 autom4te.cache

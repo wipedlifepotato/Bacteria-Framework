@@ -28,14 +28,14 @@ int main(int argc, char **argv) {
   */
   puts("start server");
   pthread_t pthreadServ, pthreadLuaServ;
-  struct serv_arguments args = {argv[1], atoi(argv[2]), cryptocoins};
+  struct serv_arguments args = {argv[1], static_cast<uint16_t>(atoi(argv[2])), cryptocoins};
   auto mainserv_fun = serv_thread;
   auto luaserv_fun = luaServer;
   //  void *(*mainserv_fun)(void *) =serv_thread;
   //  void *(*luaserv_fun)(void *) = luaServer;
   std::thread threadServ(mainserv_fun, &args);
 
-  lua_State *L = start_lua();
+  lua_State *L = start_lua(NULL);
   puts("start lua server");
   //for (int i = 0; i < 10; i++)
   //  checkRetVal(L, i);

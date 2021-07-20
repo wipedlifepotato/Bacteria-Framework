@@ -12,7 +12,7 @@ extern void serv_thread(const char *host, const uint16_t port, lua_State *L);
 static void usage(char *const program) {
   puts(PROGRAM_INFO);
   auto printoption = [&program](const char *longopt, char opt = ' ',
-                                const char *desc) {
+                                const char *desc = "") {
     printf("--%s -%c\t=> %s\n", longopt, opt, desc);
   };
   printf("\nUSAGE: %s [options]\n", program);
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     }
   }
 #ifndef DISABLELUA
-  lua_State *L = start_lua();
+  lua_State *L = start_lua(NULL);
   servArgs luasarg = {(char *)luahost.c_str(), luaport, L};
 
   // lua::pushval(L, true, 1, 2, "string", "fs", true, false, 1.0, 3.14);

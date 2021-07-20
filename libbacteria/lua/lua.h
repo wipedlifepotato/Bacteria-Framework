@@ -30,7 +30,7 @@
 }
 
 void runAllLuaFilesInDir(lua_State * L, const char * pathdir);
-lua_State *  start_lua(void) ;
+lua_State *  start_lua(const char *) ;
 
 #ifdef __cplusplus
 	}

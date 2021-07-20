@@ -35,14 +35,16 @@ INITLUAFUNC(recv){
 	if( cTop >= 3 ) dadr = (struct sockaddr*)lua_touserdata(L,3);
 	if( cTop == 4 ) flags = flags;
 	char buf[recv_count+1];
+	bzero(buf, recv_count+1);
 	size_t r = dadr == NULL ? recv(sock, buf, recv_count, flags) : recvfrom( sock, buf, recv_count, flags, dadr, &addrlen);
 	if(r <= 0){
 	 lua_pushnil(L);
 	 return 1;
 	}
+	buf[r]=0;
 	lua_pushnumber(L, addrlen);
 	lua_pushnumber(L, r);
-	lua_pushlstring(L, buf, r);
+	lua_pushstring(L, buf);
 	return 3;
 }
 
