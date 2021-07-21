@@ -37,6 +37,8 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h stdint.h stdlib.h string.h sys/soc
 AC_CHECK_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 AC_TYPE_UINT16_T
+AM_INIT_AUTOMAKE([gnu subdir-objects])
+
 
 # Checks for library functions.
 AC_CHECK_FUNCS([bzero inet_ntoa socket])

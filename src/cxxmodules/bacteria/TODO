@@ -1,0 +1,10 @@
+# in libbacteria/lua => 
+#libcrypto.c libed25519rsa.c libgmp.c libimages.c libjson.c libnet.c
+
+cryptocurrency.cpp
+encdec.cpp  DONE
+images.cpp  
+net.cpp
+ed25519rsa.cpp      
+gmp.cpp     
+json.cpp    

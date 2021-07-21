@@ -1,7 +1,13 @@
 AM_CFLAGS = 
 bin_PROGRAMS = bbootstrap-server
+cxxmodulesdir=../cxxmodules/
+bacteriamodulesource=$(cxxmodulesdir)/bacteria/encdec.cpp $(cxxmodulesdir)/bacteria/cryptocurrency.cpp\
+	$(cxxmodulesdir)/bacteria/images.cpp $(cxxmodulesdir)/bacteria/net.cpp \
+	$(cxxmodulesdir)/bacteria/ed25519rsa.cpp $(cxxmodulesdir)/bacteria/gmp.cpp \
+	$(cxxmodulesdir)/bacteria/json.cpp
+
 bbootstrap_server_SOURCES = main.cpp ../net/utils.cpp ../net/opcodes.cpp serv.cpp \
-	../cxxmodules/bacteria/encdec.cpp
+	$(bacteriamodulesource)
 #$(top_builddir)/libbacteria/lua/luaserv.c
 ibootstrap_server_DEPENDENCIES = $(top_builddir)/libbacteria/libbacteria.a
 bbootstrap_server_LDADD = $(top_builddir)/libbacteria/libbacteria.a -lluajit-5.1
