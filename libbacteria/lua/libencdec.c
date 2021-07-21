@@ -41,7 +41,7 @@ int lua_AESenc(lua_State *L) {
   int size_msg = strlen(plaintext);
   if (size_msg == 0)
     return 0;
-  unsigned char *ciphertext = (unsigned char *)malloc(size_msg * sizeof(char));
+  unsigned char *ciphertext = (unsigned char *)malloc(size_msg * sizeof(char) + 16);
   if (ciphertext == NULL)
     return 0;
 #ifdef DEBUGAES
