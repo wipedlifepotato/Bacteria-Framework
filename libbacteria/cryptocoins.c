@@ -1,5 +1,13 @@
 #include "cryptocoins.h"
-extern uint count_cryptocoins;
+extern volatile uint count_cryptocoins;
+
+struct cryptocoin * init_new_cryptocoins(const char *path, uint * size){ // not thread safe.
+	uint tmp = getCountCryptocoins();
+	struct cryptocoin * rt = init_cryptocoins(path);
+	*size=getCountCryptocoins();
+	setCountCryptocoins(tmp);
+	return rt;
+}
 struct cryptocoin *init_cryptocoins(const char *pathToIniFile) {
 #define GET_SEC(def) sprintf(tmp_buf, "%s:%s", sec_name, "" #def);
   /*

@@ -15,6 +15,7 @@ struct cryptocoin{
 };
 
 struct cryptocoin * init_cryptocoins(const char *);
+struct cryptocoin * init_new_cryptocoins(const char *, uint * size); // not thread safe
 
 void dump_cryptocoins(struct cryptocoin* cryptocoins);
 void clear_cryptocoins(struct cryptocoin * cryptocoins);
@@ -24,7 +25,7 @@ void clear_cryptocoins(struct cryptocoin * cryptocoins);
 typedef unsigned int uint;
 uint getCountCryptocoins(void);
 uint setCountCryptocoins(uint);
-static uint count_cryptocoins=0;
+volatile static uint count_cryptocoins=0;
 
 #ifdef __cplusplus
 }

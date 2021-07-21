@@ -1,3 +1,6 @@
+#ifndef __clang__
+module;
+#endif
 extern "C" {
 //#include "lua/luaserv.h"
 //#include <lauxlib.h>
@@ -14,9 +17,6 @@ extern "C" {
 #include<string>
 #include<memory>
 
-#ifndef __clang__
-module;
-#endif
 export module encdec;
 constexpr const auto x25519_lenKey = 32;
 
