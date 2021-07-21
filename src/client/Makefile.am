@@ -1,6 +1,13 @@
 AM_CFLAGS = 
 bin_PROGRAMS = bacteria-client
-bacteria_client_SOURCES = main.cpp ../net/utils.cpp
+cxxmodulesdir=../cxxmodules/
+bacteriamodulesource=$(cxxmodulesdir)/bacteria/encdec.cpp $(cxxmodulesdir)/bacteria/cryptocurrency.cpp\
+	$(cxxmodulesdir)/bacteria/images.cpp $(cxxmodulesdir)/bacteria/net.cpp \
+	$(cxxmodulesdir)/bacteria/ed25519rsa.cpp \
+	$(cxxmodulesdir)/bacteria/json.cpp
+
+
+bacteria_client_SOURCES = main.cpp ../net/utils.cpp $(bacteriamodulesource)
 bacteria_client_DEPENDENCIES = $(top_builddir)/libbacteria/libbacteria.a
 bacteria_client_LDADD = $(top_builddir)/libbacteria/libbacteria.a -lluajit-5.1 $(GTK_LIBS)
 bacteria_client_CFLAGS= -g 
