@@ -5,7 +5,7 @@ extern "C" {
 #include "cryptocoins.h"
 #include "json_rpc.h"
 };
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <map>
 #include <memory>
 #include <string>
