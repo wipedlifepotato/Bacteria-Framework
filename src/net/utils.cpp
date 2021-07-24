@@ -2,8 +2,6 @@
 namespace split {
 // constexpr auto bufsize=2056;
 
-
-
 std::vector<std::string> split(char *buf, const char schar, size_t bufsize) {
   size_t split_size;
   std::vector<std::string> rt;

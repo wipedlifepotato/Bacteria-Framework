@@ -21,14 +21,15 @@ int main(int argc, char **argv) {
 
   struct cryptocoin *cryptocoins = init_cryptocoins("cryptocoins.ini");
   // dump_cryptocoins(cryptocoins);
-  example();
+  // example();
 
   /*
           server part
   */
   puts("start server");
   pthread_t pthreadServ, pthreadLuaServ;
-  struct serv_arguments args = {argv[1], static_cast<uint16_t>(atoi(argv[2])), cryptocoins};
+  struct serv_arguments args = {argv[1], static_cast<uint16_t>(atoi(argv[2])),
+                                cryptocoins};
   auto mainserv_fun = serv_thread;
   auto luaserv_fun = luaServer;
   //  void *(*mainserv_fun)(void *) =serv_thread;
@@ -37,7 +38,7 @@ int main(int argc, char **argv) {
 
   lua_State *L = start_lua(NULL);
   puts("start lua server");
-  //for (int i = 0; i < 10; i++)
+  // for (int i = 0; i < 10; i++)
   //  checkRetVal(L, i);
 
   servArgs args_luaserv = {"127.0.0.1", 6566, L};
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
   clear_cryptocoins(cryptocoins);
   lua_close(L);
 }
-
+/*
 void example(void) {
   struct bitcoin_rpc_data bdata = {"listaccounts", brpc_prepare_params(NULL)};
   brpc_get_json(&bdata);
@@ -74,3 +75,4 @@ void example(void) {
   }
   json_decref(data);
 }
+*/

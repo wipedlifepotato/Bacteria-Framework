@@ -3,8 +3,7 @@ bin_PROGRAMS = bacteria-client
 cxxmodulesdir=../cxxmodules/
 bacteriamodulesource=$(cxxmodulesdir)/bacteria/encdec.cpp $(cxxmodulesdir)/bacteria/cryptocurrency.cpp\
 	$(cxxmodulesdir)/bacteria/images.cpp $(cxxmodulesdir)/bacteria/net.cpp \
-	$(cxxmodulesdir)/bacteria/ed25519rsa.cpp \
-	$(cxxmodulesdir)/bacteria/json.cpp
+	$(cxxmodulesdir)/bacteria/ed25519rsa.cpp 
 
 
 bacteria_client_SOURCES = main.cpp ../net/utils.cpp $(bacteriamodulesource)

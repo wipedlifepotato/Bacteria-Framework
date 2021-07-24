@@ -3,8 +3,7 @@ AM_CFLAGS =
 bin_PROGRAMS = bacteria
 bacteriamodulesource=cxxmodules/bacteria/encdec.cpp cxxmodules/bacteria/cryptocurrency.cpp\
 	cxxmodules/bacteria/images.cpp cxxmodules/bacteria/net.cpp \
-	cxxmodules/bacteria/ed25519rsa.cpp \
-	cxxmodules/bacteria/json.cpp
+	cxxmodules/bacteria/ed25519rsa.cpp 
 
 bacteria_SOURCES = async_serv.cpp main.cpp signal_handler.cpp $(bacteriamodulesource)
 bacteria_DEPENDENCIES = $(top_builddir)/libbacteria/libbacteria.a

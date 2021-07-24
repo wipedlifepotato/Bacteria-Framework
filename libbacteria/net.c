@@ -57,137 +57,139 @@ void free_splitted(char **what, size_t n) {
   free((void *)what);
 }
 
+char *packData(char **dataKeys, char **dataValues, char fsplitter,
+               char ssplitter) {
 
-char * packData(char ** dataKeys, char ** dataValues, char fsplitter, char ssplitter){
+  char **pKeys = dataKeys;
+  char **pValues = dataValues;
 
-	char ** pKeys = dataKeys;
-	char ** pValues = dataValues;
+  if (dataKeys[0] == NULL || dataValues[0] == NULL)
+    return NULL;
 
-	if(dataKeys[0] == NULL || dataValues[0] == NULL) return NULL;
+  size_t sRet = 0; //
+  char *rVal = malloc(sizeof(char) * 2);
+  if (rVal == NULL)
+    return NULL;
+  for (unsigned long i = 0; pKeys[i] != NULL && pValues[i] != NULL; i++) {
+    // strcat(sRet,dataKeys[i]);
 
+    const size_t KeySize = strlen(dataKeys[i]);
+    const size_t ValSize = strlen(dataValues[i]);
+    const size_t fullSize = KeySize + ValSize + 2;
+    rVal = realloc(rVal, (sRet + fullSize) * sizeof(char));
 
-	
-	size_t sRet = 0; //
-	char * rVal = malloc(sizeof(char)*2);
-	if(rVal == NULL) return NULL;
-	for(unsigned long i = 0; pKeys[i] != NULL && pValues[i] != NULL; i++){
-		//strcat(sRet,dataKeys[i]);
+    strcpy(rVal + sRet, dataKeys[i]);
 
-		const size_t KeySize = strlen(dataKeys[i]);
-		const size_t ValSize = strlen(dataValues[i]);
-		const size_t fullSize = KeySize + ValSize + 2;
-		rVal = realloc( rVal, (sRet+fullSize) * sizeof(char) );
+    rVal[KeySize + sRet] = fsplitter;
 
-		strcpy(rVal+sRet, dataKeys[i]);
+    strcpy(rVal + KeySize + 1 + sRet, dataValues[i]);
 
-		rVal[KeySize+sRet]=fsplitter;
+    rVal[KeySize + 1 + ValSize + sRet] = ssplitter;
 
-		strcpy(rVal+KeySize+1+sRet, dataValues[i]);
-
-		rVal[KeySize+1+ValSize+sRet] = ssplitter;
-
-		sRet+=fullSize;
-	}
-	sRet++;
-	rVal = realloc( rVal, (sRet) * sizeof(char) );
-	rVal[sRet]=0;
-	return (char*)rVal;
+    sRet += fullSize;
+  }
+  sRet++;
+  rVal = realloc(rVal, (sRet) * sizeof(char));
+  rVal[sRet] = 0;
+  return (char *)rVal;
 }
 
 // fsplitter = '='; ssplitter=';' will be by default
 
-char ** unpackData(char * data, size_t * rt_size, char fsplitter, char ssplitter){
-	void * dFirst = data;
-	size_t count_sSplitter = 0;
-	size_t count_fSplitter = 0;
-	size_t sData = 0;
-	while(*data){
-		if(*(data) == fsplitter) count_fSplitter++;
-		else if( *data == ssplitter) count_sSplitter++;
-		data++;
-		sData++;
-	}
+char **unpackData(char *data, size_t *rt_size, char fsplitter, char ssplitter) {
+  void *dFirst = data;
+  size_t count_sSplitter = 0;
+  size_t count_fSplitter = 0;
+  size_t sData = 0;
+  while (*data) {
+    if (*(data) == fsplitter)
+      count_fSplitter++;
+    else if (*data == ssplitter)
+      count_sSplitter++;
+    data++;
+    sData++;
+  }
 
-	if(count_sSplitter != count_fSplitter ) return NULL;// TODO: maybe another way.
-	data = (char*)dFirst;
-	size_t f_split_size, s_split_size;
+  if (count_sSplitter != count_fSplitter)
+    return NULL; // TODO: maybe another way.
+  data = (char *)dFirst;
+  size_t f_split_size, s_split_size;
 
-	char ** ssplitted = split_msg( data, ssplitter, &s_split_size, sData );
-	char ** rVal = malloc( sizeof(char**) * (*rt_size) );	
-	unsigned int z=0;
-	*rt_size=s_split_size*2;
-	for(unsigned int i = s_split_size;i--;){
-		char * fs = strchr(ssplitted[i], fsplitter);
-		char * ptrFirst = ssplitted[i];
-		char * ptrLast = &ssplitted[i][strlen(ssplitted[i])];
-		if(fs == NULL) {
-			rVal[z] = (char*)malloc(sizeof(char));
-			rVal[z][0] = IGNOREINFOBYTE;
-			rVal[z+1] = (char*)malloc(sizeof(char));
-			rVal[z+1][0] = IGNOREINFOBYTE;
-			z+=2;
-			continue;
-		}
-		size_t s1=( fs - ptrFirst  ), s2= (ptrLast - fs);
+  char **ssplitted = split_msg(data, ssplitter, &s_split_size, sData);
+  char **rVal = malloc(sizeof(char **) * (*rt_size));
+  unsigned int z = 0;
+  *rt_size = s_split_size * 2;
+  for (unsigned int i = s_split_size; i--;) {
+    char *fs = strchr(ssplitted[i], fsplitter);
+    char *ptrFirst = ssplitted[i];
+    char *ptrLast = &ssplitted[i][strlen(ssplitted[i])];
+    if (fs == NULL) {
+      rVal[z] = (char *)malloc(sizeof(char));
+      rVal[z][0] = IGNOREINFOBYTE;
+      rVal[z + 1] = (char *)malloc(sizeof(char));
+      rVal[z + 1][0] = IGNOREINFOBYTE;
+      z += 2;
+      continue;
+    }
+    size_t s1 = (fs - ptrFirst), s2 = (ptrLast - fs);
 
-		rVal[z] = malloc(sizeof(char) * s1+1);
-		rVal[z+1] = malloc(sizeof(char) * s2 +1);
-		bzero(rVal[z], s1+1);
-		bzero(rVal[z+1],s2+1);
-		memcpy(rVal[z], ptrFirst, s1);
-		memcpy(rVal[z+1], fs+1, s2);
-//		rVal[z][( ptrFirst - fs )+1] = '\0';
-//		rVal[z+1][( ptrLast - fs )+1] = '\0';
-		//printf("rval; %s = %s\n", rVal[z], rVal[z+1]);
-		z+=2;
-	}
+    rVal[z] = malloc(sizeof(char) * s1 + 1);
+    rVal[z + 1] = malloc(sizeof(char) * s2 + 1);
+    bzero(rVal[z], s1 + 1);
+    bzero(rVal[z + 1], s2 + 1);
+    memcpy(rVal[z], ptrFirst, s1);
+    memcpy(rVal[z + 1], fs + 1, s2);
+    //		rVal[z][( ptrFirst - fs )+1] = '\0';
+    //		rVal[z+1][( ptrLast - fs )+1] = '\0';
+    // printf("rval; %s = %s\n", rVal[z], rVal[z+1]);
+    z += 2;
+  }
 
-	free_splitted(ssplitted, s_split_size);
-	return rVal;
+  free_splitted(ssplitted, s_split_size);
+  return rVal;
 }
 
-char * join_data(const char * a, const char *b, const char split_char){
-	size_t sA = strlen(a);
-	size_t sB = strlen(b);
-//	size_t lSize = 0;
-	char * ret = malloc(sizeof(char) * (sA+sB)+3); // ';' + ';' + \0
-	memcpy(ret, a, sA);
-//	lSize += sA;
-	ret[sA]=split_char;
-//	lSize++;
-	memcpy((ret+sA+1), b, sB); // plus ';'
-//	lSize+=sB;
-	ret[sA+sB+1] = split_char;
-//	lSize++; 
-	ret[sA+sB+2] = '\0'; //plus ';' + ';'
-	return ret;
+char *join_data(const char *a, const char *b, const char split_char) {
+  size_t sA = strlen(a);
+  size_t sB = strlen(b);
+  //	size_t lSize = 0;
+  char *ret = malloc(sizeof(char) * (sA + sB) + 3); // ';' + ';' + \0
+  memcpy(ret, a, sA);
+  //	lSize += sA;
+  ret[sA] = split_char;
+  //	lSize++;
+  memcpy((ret + sA + 1), b, sB); // plus ';'
+                                 //	lSize+=sB;
+  ret[sA + sB + 1] = split_char;
+  //	lSize++;
+  ret[sA + sB + 2] = '\0'; // plus ';' + ';'
+  return ret;
 }
 
-char * join_addresses(const char * addr, ...){
+char *join_addresses(const char *addr, ...) {
 
-	va_list ap;
-	va_start(ap, addr);
-	size_t cSize = strlen(addr);
-	char * pRet = malloc(cSize+1*sizeof(char));//sizeof of char is 1 on must of OS
-	//void * fRet = pRet;
-	//bzero(pRet, cSize);
-	strcpy(pRet, addr);
-	pRet[cSize] = SPLITADDRCHAR;
+  va_list ap;
+  va_start(ap, addr);
+  size_t cSize = strlen(addr);
+  char *pRet =
+      malloc(cSize + 1 * sizeof(char)); // sizeof of char is 1 on must of OS
+  // void * fRet = pRet;
+  // bzero(pRet, cSize);
+  strcpy(pRet, addr);
+  pRet[cSize] = SPLITADDRCHAR;
 
-	addr = va_arg(ap, char*);
+  addr = va_arg(ap, char *);
 
-	while( addr != NULL ){
-		size_t addr_size =strlen(addr)+1;
-		pRet = (char*)realloc( pRet, ( addr_size+ cSize + 1) * sizeof(char) );
-		memcpy(pRet+cSize+1, addr, addr_size);
-		cSize+=addr_size;
-		pRet[cSize] = SPLITADDRCHAR;
-		addr = va_arg(ap, char*);
+  while (addr != NULL) {
+    size_t addr_size = strlen(addr) + 1;
+    pRet = (char *)realloc(pRet, (addr_size + cSize + 1) * sizeof(char));
+    memcpy(pRet + cSize + 1, addr, addr_size);
+    cSize += addr_size;
+    pRet[cSize] = SPLITADDRCHAR;
+    addr = va_arg(ap, char *);
+  }
 
-	}
-
-	pRet = realloc(pRet,cSize + 1);
-	pRet[cSize] = '\0';
-	return	pRet;
-
+  pRet = realloc(pRet, cSize + 1);
+  pRet[cSize] = '\0';
+  return pRet;
 }

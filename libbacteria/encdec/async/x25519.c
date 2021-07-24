@@ -81,10 +81,10 @@ void x25519_getRawPubKey(EVP_PKEY *privKey, uint8_t *pub) {
 }
 
 void x25519_freeKeyPair(struct x25519_keysPair *pair) {
-  if(pair->pKeyCtx != NULL)
-  	EVP_PKEY_CTX_free(pair->pKeyCtx);
-  if(pair->privKey != NULL)
- 	 EVP_PKEY_free(pair->privKey);
+  if (pair->pKeyCtx != NULL)
+    EVP_PKEY_CTX_free(pair->pKeyCtx);
+  if (pair->privKey != NULL)
+    EVP_PKEY_free(pair->privKey);
   //	EVP_PKEY_free(pair->pubKey);
 }
 void x25519_freeSharedKey(uint8_t *w) {

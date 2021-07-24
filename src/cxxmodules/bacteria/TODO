@@ -5,6 +5,6 @@ cryptocurrency.cpp DONE
 encdec.cpp  DONE
 gmp.cpp     not need https://gmplib.org/manual/C_002b_002b-Interface-General
 ed25519rsa.cpp     DONE
-json.cpp    
+json.cpp    not need - https://json.nlohmann.me/
 net.cpp
-fmages.cpp  
+images.cpp  DONE

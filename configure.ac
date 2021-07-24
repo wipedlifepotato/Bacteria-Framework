@@ -31,7 +31,7 @@ CFLAGS="$CFLAGS -g"
 #PKG_CHECK_MODULES([GTK], [gtk+-3.0])
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h stdint.h stdlib.h string.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h stdint.h stdlib.h string.h sys/socket.h unistd.h json.hpp])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

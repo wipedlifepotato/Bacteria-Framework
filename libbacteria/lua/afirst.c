@@ -35,7 +35,7 @@ static void luaopen_sql(lua_State * L){
         lua_pop(L, 2);
 }*/
 
-lua_State *start_lua(const char * initScript) {
+lua_State *start_lua(const char *initScript) {
   //  char buff[256];
   //  int error;
   lua_State *L = lua_open(); /* opens Lua */
@@ -55,10 +55,10 @@ lua_State *start_lua(const char * initScript) {
   luaopen_lnet(L);
   // luaopen_sql(L);
   // initLuaSubmodules(L, "./luasubmodules");
-  if(initScript == NULL)
-  	lua_loadscript(L, init_lua_file_path);
+  if (initScript == NULL)
+    lua_loadscript(L, init_lua_file_path);
   else
-	lua_loadscript(L, initScript);
+    lua_loadscript(L, initScript);
   return L;
   //  while (fgets(buff, sizeof(buff), stdin) != NULL) {
   //    error =
