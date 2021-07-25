@@ -10,6 +10,7 @@ AC_PROG_RANLIB([RANLIB])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+#LT_INIT
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lpthread':
@@ -47,6 +48,7 @@ AC_CONFIG_FILES([
 		 Makefile
                  src/Makefile
 		 libbacteria/Makefile
+		 src/protocolcxx/Makefile
 		 src/bootstrap/Makefile
 		 src/client/Makefile
 		 ])

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <vector>
 // import bnet;
+#include"bnet.h"
 #define doExit(...)                                                            \
   {                                                                            \
     eprintf(__VA_ARGS__);                                                      \
