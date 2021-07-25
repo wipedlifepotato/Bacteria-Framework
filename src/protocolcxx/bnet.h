@@ -1,32 +1,11 @@
-#ifndef __clang__
-module;
-#endif
-extern "C" {
 #include "net.h"
-}
+#include "lua/luaserv.h"
 #include <ctime>
 #include <map>
-//#include<chrono>
+#include <vector>
+#include<thread>
 
-export module bnet;
-/*
-        time_t lastPing;
-        struct sockaddr_in addr_in;
-        char * host;
-        uint16_t port;
-        int sock_tcp;
-        int *sock_udp;
-        contype allow_con;
-        peertype type;
-        char * shared_key; // with another peer
-        char * ed25519_key; // pub
-        char * x25519_key; // pub
-        char * rsa_key; // pub
-        char * identificator; // sha256 of pubkey x25519
-        size_t host_mirrors_count;
-        char ** host_mirrors; // i2p / onion / yggdrasil / etc mirrors.
-*/
-export namespace bacteria {
+namespace bacteria {
   namespace net {
   enum mirrors_t { i2p, onion };
   enum peertype_t {
@@ -40,9 +19,9 @@ export namespace bacteria {
   class peer {
   private:
   protected:
-    struct sockaddr_in addr_in;
-    std::string host;
-    uint16_t port;
+    struct sockaddr_in mIn;
+    std::string mHost;
+    uint16_t mPort;
     int sock_tcp, sock_udp;
 
   protected:
@@ -61,7 +40,13 @@ export namespace bacteria {
     peertype_t type;
 
   public:
-  };
+  void killConnect(void);
+  bool operator==(struct sockaddr_in &s);
+  peer& operator()(peer && p);
+
+  };//class peer
+
+
   } // namespace net
 
 } // namespace bacteria
