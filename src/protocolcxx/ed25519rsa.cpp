@@ -1,4 +1,7 @@
 #include "ed25519rsa.h"
+#include <fcntl.h>           /* Definition of AT_* constants */
+#include <unistd.h>
+
 namespace bacteria {
 using namespace rsa_ed25519;
 void basic_verify::freeMKey(void) {
