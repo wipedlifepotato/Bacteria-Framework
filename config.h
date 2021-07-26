@@ -7,9 +7,6 @@
 /* Define to 1 if you have the `bzero' function. */
 #define HAVE_BZERO 1
 
-/* Define to 1 if you have the <dlfcn.h> header file. */
-/* #undef HAVE_DLFCN_H */
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
@@ -93,9 +90,6 @@
 
 /* Define to 1 if the system has the type `_Bool'. */
 #define HAVE__BOOL 1
-
-/* Define to the sub-directory where libtool stores uninstalled libraries. */
-/* #undef LT_OBJDIR */
 
 /* Name of package */
 #define PACKAGE "bacteria"
