@@ -20,7 +20,7 @@
 (thanks for logo by some guy whose dont want to say himself name)
 --------------------------------------------------
 !https://travis-ci.com/wipedlifepotato/bacteria.svg?branch=master!:https://travis-ci.com/wipedlifepotato/bacteria
-¤Bacteria¤ 
+¤Bacter¤ 
 Features(not only whose in the list):
 	- cryptocoins JSON-RPC support in C and Lua {in libbacteria} {{libcrypto+libjson}}
 	- ...
@@ -31,7 +31,7 @@ Features(not only whose in the list):
 	- ed25519rsa for Lua (sign/verify RSA+ed25519 support) {{libbacteria}} {{ed25519rsa}} 
 	- ed25519 + RSA + base64 preinit functional for C (sign/verify) {{libbacteria}} 
 	- ....
-	- (lua_server for debug and server `console` in future)
+	- (lua server for debug and server `console` in future)
 TODO(for now):
 	- pre-init postgres database and C code for works with it, and lua module for work with it
 	- own network protocol idea.
