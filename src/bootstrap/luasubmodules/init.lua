@@ -25,6 +25,7 @@ function event1(sock, ip, port, buf)
 	lnet.send(sock,"Test?")
 	while 1 == 1 do
 		socklen, rbytes, msg = lnet.recv(sock,1024)
+		if msg == nil then break end
 		if string.len(msg) > 1 then
 			break
 		end

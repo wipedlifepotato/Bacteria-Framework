@@ -13,9 +13,10 @@
 
 #define SBUF 1024
 
+
 static opcode::opcode opcodes[] = {
-    {{0x01, opcode::ignorebyte, opcode::ignorebyte, 0x01}, opcode::event0},
-    {{'a', 'b', 'c', 'd'}, opcode::event1},
+    {{0x01, opcode::ignorebyte, opcode::ignorebyte, 0x01}, opcode::events::event0},
+    {{'a', 'b', 'c', 'd'}, opcode::events::event1},
 };
 namespace serv {
 struct user {
@@ -24,7 +25,7 @@ struct user {
   struct sockaddr_in in;
   bool operator==(struct sockaddr_in &s) {
     return s.sin_family == in.sin_family && s.sin_port == in.sin_port &&
-           s.sin_addr.s_addr == s.sin_addr.s_addr;
+           s.sin_addr.s_addr == in.sin_addr.s_addr;
   }
   user(struct sockaddr_in &s) {
     ip = inet_ntoa(s.sin_addr);
@@ -160,6 +161,8 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
         }
 
         if (!user_exists) {
+          // TODO: 	ping-pong time(NULL) ...500ms -> users.erase(usr);
+	  if(users.size() > 10) users = std::vector< serv::user >{};
           serv::user usr{client_addr};
           users.push_back(usr);
         }
@@ -169,9 +172,33 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
                sizeOfSockAddrType);
 
         // TODO: UDP handler function
+        std::cout << "Continue" << std::endl;
+        continue;
+      } // udp
+
+      if (events[n].data.fd == main_descriptor) { // if is main descriptor
+        puts("Accept handler");
+        int conn_sock = accept(main_descriptor, (struct sockaddr *)&client_addr,
+                               &sizeOfSockAddrType);
+        if (conn_sock == -1) {
+          perror("accept");
+          puts("accept");
+          exit(EXIT_FAILURE);
+        }
+        int flags = fcntl(conn_sock, F_GETFL, 0);
+        fcntl(conn_sock, F_SETFL, flags | O_NONBLOCK);
+
+        ev.events = EPOLLIN | EPOLLET;
+        ev.data.fd = conn_sock;
+        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
+          puts("epoll_ctl");
+          perror("epoll_ctl: conn_sock");
+          exit(EXIT_FAILURE);
+        }
 	/*
 		UDP will be to using for peer talks only. (?)
 	*/
+
       }      /*if acceptor TCP*/
       else { /*if client*/
              // TODO: TCP handler function
@@ -218,7 +245,7 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
         } // for
         if (!found) {
           puts("Opcode not founded");
-	  opcode::notFound(L, events[n].data.fd, ip, port, buf, data);
+	  opcode::events::notFound(L, events[n].data.fd, ip, port, buf, data);
           // close(events[n].data.fd);
         }
 
