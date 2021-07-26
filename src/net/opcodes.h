@@ -51,6 +51,7 @@ class opcode{
 
 // events
 namespace opcode{
+	void notFound(lua_State * L, int sock, const char * uIp, uint16_t uPort, char* buf, opcode_data op);
 	void event1(lua_State * L, int sock, const char * uIp, uint16_t uPort, char* buf, ...);
 	void event0(lua_State * L, int sock, const char * uIp, uint16_t uPort, char* buf, ...);
 };
