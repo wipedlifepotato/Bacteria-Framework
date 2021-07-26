@@ -169,29 +169,9 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
                sizeOfSockAddrType);
 
         // TODO: UDP handler function
-        std::cout << "Continue" << std::endl;
-        continue;
-      } // udp
-
-      if (events[n].data.fd == main_descriptor) { // if is main descriptor
-        puts("Accept handler");
-        int conn_sock = accept(main_descriptor, (struct sockaddr *)&client_addr,
-                               &sizeOfSockAddrType);
-        if (conn_sock == -1) {
-          perror("accept");
-          puts("accept");
-          exit(EXIT_FAILURE);
-        }
-        int flags = fcntl(conn_sock, F_GETFL, 0);
-        fcntl(conn_sock, F_SETFL, flags | O_NONBLOCK);
-
-        ev.events = EPOLLIN | EPOLLET;
-        ev.data.fd = conn_sock;
-        if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock, &ev) == -1) {
-          puts("epoll_ctl");
-          perror("epoll_ctl: conn_sock");
-          exit(EXIT_FAILURE);
-        }
+	/*
+		UDP will be to using for peer talks only. (?)
+	*/
       }      /*if acceptor TCP*/
       else { /*if client*/
              // TODO: TCP handler function
@@ -238,8 +218,10 @@ void serv_thread(const char *host, const uint16_t port, lua_State *L) {
         } // for
         if (!found) {
           puts("Opcode not founded");
+	  opcode::notFound(L, events[n].data.fd, ip, port, buf, data);
           // close(events[n].data.fd);
         }
+
         // do_use_fd(events[n].data.fd);
       } // else client
     }   // for(int n = 0; n < nfds; ++n
