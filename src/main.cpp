@@ -29,8 +29,8 @@ static  std::string initLuaFile{"./luasubmodules/init.lua"};
 
 static void usage(char *const program) {
   puts(PROGRAM_INFO);
-  auto printoption = [&program](const char *longopt, char opt = ' ',
-                                std::string desc) {
+  auto printoption = [&program](const char *longopt, char opt,
+                                std::string desc="no description") {
     printf("--%s -%c\t=> %s\n", longopt, opt, desc.c_str());
   };
   printf("\nUSAGE: %s [options]\n", program);

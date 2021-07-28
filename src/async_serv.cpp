@@ -20,10 +20,11 @@ static opcode::opcode opcodes[] = {
     {{'a', 'b', 'c', 'd'}, opcode::events::event1},
 };
 namespace serv {
-struct user {
+struct user {// for udp; todo: change.
   std::string ip;
   uint16_t port;
   struct sockaddr_in in;
+  time_t lastPing;
   bool operator==(struct sockaddr_in &s) {
     return s.sin_family == in.sin_family && s.sin_port == in.sin_port &&
            s.sin_addr.s_addr == in.sin_addr.s_addr;
@@ -34,7 +35,9 @@ struct user {
     in.sin_family = s.sin_family;
     in.sin_port = s.sin_port;
     in.sin_addr.s_addr = s.sin_addr.s_addr;
+    updatePing();
   }
+  void updatePing(void){ lastPing = time(NULL); }
 };
 } // namespace serv
 
@@ -155,14 +158,36 @@ void serv_thread(struct serv_arguments * arguments) {
 
         bool user_exists = false;
         std::stringstream list;
+        time_t timenow = time(NULL);
+
+	auto delByPing = [&timenow](){
+			auto deleted = false;
+			do{
+			deleted = false;
+			for( auto it = users.begin(); it != users.end(); it++ ){
+			   serv::user & u = *it;
+			   if(timenow - u.lastPing > 120) {
+				puts("Erase user(timeout): ");
+				std::cout << u.ip << std::endl;
+				users.erase(it);
+				deleted = true;
+				break;
+			   }
+			}
+			}while(deleted);
+	};
+
+	delByPing();
+
         for (auto u : users) {
-          // TODO: 	ping-pong time(NULL) ...500ms -> users.erase(usr);
           if (u == client_addr) {
             puts("User exists already");
             user_exists = true;
             //    break;
+	    u.updatePing();
           }
           list << u.ip << ":" << u.port << ";";
+         
         }
 
         if (!user_exists) {

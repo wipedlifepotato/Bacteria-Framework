@@ -41,6 +41,8 @@ struct sock_data {
   socklen_t m_adr_l;
   int *m_sock_tcp, *m_sock_udp;
 
+  time_t lastPing;
+
   peer_pair_t m_peer_info;
 
   sock_data(struct sockaddr_in adr, socklen_t adr_l, int *sock_tcp,
@@ -157,6 +159,20 @@ struct serv_data {
     }
     m_sock_udp = m_udp_self;
   }
+  void delByPing(int s){
+      time_t timenow = time(NULL);
+      bool erased=false;
+      do{
+	erased=false;
+      	for (auto it = users_map.begin(); it != users_map.end(); it++) {
+			if( timenow - it->second.lastPing > s ){
+			 users_map.erase(it);
+			 erased = true;
+			 break;
+			}
+      	}
+      }while(erased);
+  }
   void getUsers(void) {
     try {
       write("getuserlist\n");
@@ -181,6 +197,7 @@ struct serv_data {
           n_data.set_timeout(1, 0);
           auto r = n_data.read().first;
           if (r.size()) {
+            n_data.lastPing = time(NULL);
             users_map[{ip, atoi(port.c_str())}] = n_data;
             //			puts("New connection");
             //			sleep(35);//TODELETE
@@ -199,14 +216,19 @@ struct serv_data {
         users_map[r.second.m_peer_info] = r.second;
         //		 puts("New connection");
         //		 sleep(35);//TODELETE
-      }
+      } 
+      users_map[r.second.m_peer_info].lastPing=time(NULL);
 
       std::cout << "Users count: " << users_map.size() - 1 << std::endl;
       if (users_map.size() - 1 > 2) {
         std::cout << "Test passed!" << std::endl;
-        m_data.write("abcd\n", true);
+        m_data.write("abcd\n3.14zda\n", true);
         auto b = m_data.read(1024, true);
         std::cout << "TCP RET:" << b.first << std::endl;
+        m_data.write("example\n", true);
+        auto c = m_data.read(1024, true);
+        std::cout << "TCP RET:" << c.first << std::endl;
+
         sleep(1000);
       }
     } catch (std::exception &e) {
@@ -280,13 +302,18 @@ int main(int argc, char **argv) {
     gtk_main();
   }
   */
-
-  if (argc != 3)
-    stop_program("%s host port\n", argv[0]);
-  serv_data sdata(argv[1], atoi(argv[2]));
+  std::string host{"127.0.0.1"};
+  uint16_t port = 3245;
+  if (argc == 3){
+    //stop_program("%s host port\n", argv[0]);
+	host = argv[1];
+	port = atoi(argv[2]);
+  }
+  serv_data sdata(host, port);
   sdata.self_bind();
   while (1) {
     sdata.getUsers();
+    sdata.delByPing(5);
     sleep(1);
   }
 }
