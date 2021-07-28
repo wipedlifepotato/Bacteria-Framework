@@ -49,7 +49,6 @@ AC_CONFIG_FILES([
                  src/Makefile
 		 libbacteria/Makefile
 		 src/protocolcxx/Makefile
-		 src/bootstrap/Makefile
 		 src/client/Makefile
 		 ])
 AC_OUTPUT
