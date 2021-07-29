@@ -17,9 +17,38 @@ end
 -- events
 --int sock, const char * uIp, uint16_t uPort, char* buf
 local opcodes={}
-opcodes["test"] = function (sock,ip,port,buf) 
-	print("Test opcode") 
-	return "Test opcode"
+opcodes["pisk"] = function (sock,ip,port,buf) 
+	print("Test opcode, key: ", buf) 
+	while 1 == 1 do
+	socklen, rbytes, msg = lnet.recv(sock,1024)
+	if msg == nil then break end
+	if string.len(msg) > 1 then
+		break
+	end
+	end
+	aes=bacteria_aes:new(buf, "123456789012345")
+	print("key:", aes:getKey(), "IV: ",aes:getIV())
+	aes:encrypt(msg, AESENCType["t_aescbc"]) -- b:getAESData_rawEnc()
+	aesdata,sz=aes:getAESData_enc()
+	aes:clear()	
+	return "Test opcode: ".. string.tohex(aesdata)
+end 
+opcodes["pizd"] = function (sock,ip,port,buf) 
+	print("Test opcode, key: ", buf) 
+	while 1 == 1 do
+	socklen, rbytes, msg = lnet.recv(sock,1024)
+	if msg == nil then break end
+	if string.len(msg) > 1 then
+		break
+	end
+	end
+	aes=bacteria_aes:new(buf, "123456789012345")
+	aes:setAESData_enc( string.fromhex(msg) )
+	aes:decrypt(aes:getAESData_rawEnc(), AESENCType["t_aescbc"])
+	aesdata,saesdata=aes:getAESData_dec()
+	aes:clear()	
+	if aesdata == nil then return "NIL!" end
+	return "Test opcode: ".. aesdata
 end 
 function undefined_event(sock, ip, port, buf, opcode)
 	print("Opcode: ", opcode)
@@ -129,7 +158,7 @@ local function EncDecTest()
 	msg=msg .. addChar("s",666)
 
 	b=bacteria_aes.new() --("mysmallkey") -- ("mykey","myiv") 32,16 bytes
-	--print("key:", b:getKey(), "IV: ",b:getIV())
+	print("key:", b:getKey(), "IV: ",b:getIV())
 	print("AES check!")
 	checkAllTypes(b,"is example message aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafasdjasdjkfsdfjasdfjiaodfasdfjiasdijfasidfadfiaojsdijfoasdfiaojsdfiojasdfijasdfuhasdufhasdiufhasidufashdfiasudhfiasudhfiuasdfihuSOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOFSDJKFASDJFASJDFQJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	print("\n\n\n\n\n\n\n\n\n\nx25519 + AES check!\n\n\n\n\n\n\n\n\n\n")

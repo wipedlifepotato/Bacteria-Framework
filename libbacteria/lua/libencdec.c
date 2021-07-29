@@ -5,6 +5,8 @@
   lua_pushnumber(L, val);                                                      \
   lua_settable(L, -3)
 
+#define DEBUGAES
+
 int luaopen_encdec(lua_State *L) {
   lua_newtable(L);
   LUA_ENUM(L, t_ecb);
@@ -31,7 +33,7 @@ int lua_genRandBytes(lua_State *L) {
   if ((type & t_##prefix) == t_##prefix) {                                     \
     ciphertext_len = algo##_encrypt(plaintext, size_msg, key, iv, ciphertext); \
   }
-int lua_AESenc(lua_State *L) {
+int lua_AESenc(lua_State *L) { // lua_AESenc
   char *key = (char *)luaL_checkstring(L, 1);
   char *iv = (char *)luaL_checkstring(L, 2);
   unsigned char *plaintext = (unsigned char *)luaL_checkstring(L, 3);
@@ -95,7 +97,7 @@ int lua_AESdec(lua_State *L) {
   struct lua_AESData *in = (struct lua_AESData *)lua_touserdata(L, 3);
   int type = (int)luaL_checknumber(L, 4);
 
-  if (in->data == 0 || in->size == 0)
+  if (in == NULL || in->data == 0 || in->size == 0)
     return 0;
 
   int plaintext_len;
