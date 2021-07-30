@@ -5,7 +5,7 @@
   lua_pushnumber(L, val);                                                      \
   lua_settable(L, -3)
 
-#define DEBUGAES
+//#define DEBUGAES
 
 int luaopen_encdec(lua_State *L) {
   lua_newtable(L);
@@ -23,9 +23,9 @@ int lua_genRandBytes(lua_State *L) {
     luaL_error(L, "genRandBytes. bytes will be more than 0.");
   }
   char bytes[len + 1];
-  generate_rand_bytes(len, bytes);
+  generate_rand_bytes(len+1, bytes);
   bytes[len] = '0';
-  lua_pushstring(L, bytes);
+  lua_pushlstring(L, bytes, len);
   return 1;
 }
 
@@ -34,8 +34,8 @@ int lua_genRandBytes(lua_State *L) {
     ciphertext_len = algo##_encrypt(plaintext, size_msg, key, iv, ciphertext); \
   }
 int lua_AESenc(lua_State *L) { // lua_AESenc
-  char *key = (char *)luaL_checkstring(L, 1);
-  char *iv = (char *)luaL_checkstring(L, 2);
+  unsigned char *key = (unsigned char *)luaL_checkstring(L, 1);
+  unsigned char *iv = (unsigned char *)luaL_checkstring(L, 2);
   unsigned char *plaintext = (unsigned char *)luaL_checkstring(L, 3);
   int type = (int)luaL_checknumber(L, 4);
 
@@ -55,9 +55,15 @@ int lua_AESenc(lua_State *L) { // lua_AESenc
   INITENCTYPE(cbc, AES_256_cbc)
   else INITENCTYPE(ecb, AES_256_ecb) else INITENCTYPE(
       chacha20, chacha20_poly1305) else return 0;
-  ciphertext[ciphertext_len] = '\0';
 
+ // if(ciphertext_len <= 0) luaL_error(L,"encrypt failed");
+  if(ciphertext_len <= 0) {
+	lua_pushnil(L);
+	return 1;
+  }
+  ciphertext[ciphertext_len] = '\0';
 #ifdef DEBUGAES
+  printf("IV: %s\t\tKEY: %s\n", iv, key);
   for (unsigned int i = 0; i < ciphertext_len; i++) {
     printf("%d ", ciphertext[i]);
   }
@@ -66,10 +72,6 @@ int lua_AESenc(lua_State *L) { // lua_AESenc
   printf("\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 #endif
-  if (ciphertext_len < 0) {
-    fprintf(stderr, "Error openssl. see logs.\n");
-    return 0;
-  }
   size_t nbytes = sizeof(struct lua_AESData) +
                   (ciphertext_len - 1) * sizeof(size_t) + sizeof(char *);
   struct lua_AESData *ret = (struct lua_AESData *)lua_newuserdata(L, nbytes);
@@ -92,11 +94,11 @@ int lua_AESdec(lua_State *L) {
          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 #endif
 
-  char *key = (char *)luaL_checkstring(L, 1);
-  char *iv = (char *)luaL_checkstring(L, 2);
+  unsigned char *key = (unsigned char *)luaL_checkstring(L, 1);
+  unsigned char *iv = (unsigned char *)luaL_checkstring(L, 2);
   struct lua_AESData *in = (struct lua_AESData *)lua_touserdata(L, 3);
   int type = (int)luaL_checknumber(L, 4);
-
+  
   if (in == NULL || in->data == 0 || in->size == 0)
     return 0;
 
@@ -106,6 +108,7 @@ int lua_AESdec(lua_State *L) {
     return 0;
 
 #ifdef DEBUGAES
+  printf("IV: %s\t\tKEY: %s\n", iv, key);
   for (unsigned int i = 0; i < in->size; i++) {
     printf("%d ", in->data[i]);
   }
@@ -117,13 +120,13 @@ int lua_AESdec(lua_State *L) {
   INITDECTYPE(cbc, AES_256_cbc)
   else INITDECTYPE(ecb, AES_256_ecb) else INITDECTYPE(
       chacha20, chacha20_poly1305) else return 0;
-
-  plaintext[plaintext_len] = '\0';
-  if (plaintext_len < 0) {
-    fprintf(stderr, "Error openssl. see logs.\n");
-    return 0;
+  //if(plaintext_len <= 0) luaL_error(L,"decrypt failed");
+  if(plaintext_len <= 0) {
+	lua_pushnil(L);
+	return 1;
   }
-
+  plaintext[plaintext_len] = '\0';
+  
   /*if(in->data!=NULL){
           free(in->data);
   }

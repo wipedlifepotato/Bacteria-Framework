@@ -18,7 +18,15 @@ end
 --int sock, const char * uIp, uint16_t uPort, char* buf
 local opcodes={}
 opcodes["pisk"] = function (sock,ip,port,buf) 
-	print("Test opcode, key: ", buf) 
+	local key = buf
+	while string.len(key) ~= 32 do
+		if string.len(key) > 32 then
+			key=string.sub(key,0,32)
+		else
+			key=key.."0"
+		end
+	end
+	print("Test opcode, key: ", key) 
 	while 1 == 1 do
 	socklen, rbytes, msg = lnet.recv(sock,1024)
 	if msg == nil then break end
@@ -26,7 +34,7 @@ opcodes["pisk"] = function (sock,ip,port,buf)
 		break
 	end
 	end
-	aes=bacteria_aes:new(buf, "123456789012345")
+	aes=bacteria_aes:new(key, "1234567890123451")
 	print("key:", aes:getKey(), "IV: ",aes:getIV())
 	aes:encrypt(msg, AESENCType["t_aescbc"]) -- b:getAESData_rawEnc()
 	aesdata,sz=aes:getAESData_enc()
@@ -34,7 +42,16 @@ opcodes["pisk"] = function (sock,ip,port,buf)
 	return "Test opcode: ".. string.tohex(aesdata)
 end 
 opcodes["pizd"] = function (sock,ip,port,buf) 
-	print("Test opcode, key: ", buf) 
+	local key = buf
+	while string.len(key) ~= 32 do
+		if string.len(key) > 32 then
+			key=string.sub(key,0,32)
+		else
+			key=key.."0"
+		end
+	end
+
+	print("Test opcode, key: ", key) 
 	while 1 == 1 do
 	socklen, rbytes, msg = lnet.recv(sock,1024)
 	if msg == nil then break end
@@ -42,7 +59,7 @@ opcodes["pizd"] = function (sock,ip,port,buf)
 		break
 	end
 	end
-	aes=bacteria_aes:new(buf, "123456789012345")
+	aes=bacteria_aes:new(key, "1234567890123451")
 	aes:setAESData_enc( string.fromhex(msg) )
 	aes:decrypt(aes:getAESData_rawEnc(), AESENCType["t_aescbc"])
 	aesdata,saesdata=aes:getAESData_dec()
@@ -127,7 +144,7 @@ local function addChar(ch,time)
 	return ret
 end
 
-local function checkAllTypes(b,msg)
+local function checkAllTypes(b,msg) -- 
 --	b:encrypt(msg)
 --	b:decrypt( b:getAESData_rawEnc() )
 --	b:clear()
@@ -140,13 +157,8 @@ local function checkAllTypes(b,msg)
 		b:decrypt(b:getAESData_rawEnc(), data)
 		aesdata_dec,saesdata_dec=b:getAESData_dec()
 		b:clear()  
-		print("Decrypt msg(from local aesdata, from C): ", aesdata_dec)
-		print("SetAESData")
-		b:setAESData_enc(aesdata_enc,saesdata_enc)
-		print("Decrypt")
-		b:decrypt(b:getAESData_rawEnc(), data)
-		aesdata_dec,saesdata_dec=b:getAESData_dec()
-		print("Decrypt msg(from created aesdata, from lua): ", aesdata_dec)
+		print("Decrypt msg: ", aesdata_dec)
+--
 	   -- end
 
 	end
@@ -158,7 +170,7 @@ local function EncDecTest()
 	msg=msg .. addChar("s",666)
 
 	b=bacteria_aes.new() --("mysmallkey") -- ("mykey","myiv") 32,16 bytes
-	print("key:", b:getKey(), "IV: ",b:getIV())
+	print("key:", string.len(b:getKey()), "IV: ",string.len(b:getIV()))
 	print("AES check!")
 	checkAllTypes(b,"is example message aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafasdjasdjkfsdfjasdfjiaodfasdfjiasdijfasidfadfiaojsdijfoasdfiaojsdfiojasdfijasdfuhasdufhasdiufhasidufashdfiasudhfiasudhfiuasdfihuSOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOFSDJKFASDJFASJDFQJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	print("\n\n\n\n\n\n\n\n\n\nx25519 + AES check!\n\n\n\n\n\n\n\n\n\n")
@@ -201,8 +213,8 @@ local function EncDecTest()
 	--print("Shared0:", shared0)
 	--print("Shared1:", shared1)
 
-	aes1=bacteria_aes:new(shared0, "123456789012345")
-	aes=bacteria_aes:new(shared1, "123456789012345")
+	aes1=bacteria_aes:new(shared0, "1234567890123451")
+	aes=bacteria_aes:new(shared1, "1234567890123451")
 	aes1:encrypt("TestMsg W10013291825328197ASHFASDF8932ASDF8532BUSAFD893251BSDFA78532BFW783125HBSFAD789aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaafasdjasdjkfsdfjasdfjiaodfasdfjiasdijfasidfadfiaojsdijfoasdfiaojsdfiojasdfijasdfuhasdufhasdiufhasidufashdfiasudhfiasudhfiuasdfihuSOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOFSDJKFASDJFASJDFQJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	--print("Encrypted")
 	aes:decrypt(aes1:getAESData_rawEnc())
@@ -404,21 +416,21 @@ local function checkEd25519rsa ()
 	ed25519rsa.freeaKey(rsa)
 	ed25519rsa.freeaKey(rsa_)
 end
-checkEd25519rsa ()
-GMPTEST()
-CryptocoinsTest()
+--checkEd25519rsa ()
+--GMPTEST()
+--CryptocoinsTest()
 EncDecTest()
 
-gdbusedraw=false
-checkGD(gdbusedraw,120,120,100,color)
+--gdbusedraw=false
+--checkGD(gdbusedraw,120,120,100,color)
 
 
-mytable={key="value", sdfasdf=123, s03="321"}
-mytable["p1"]="e"
-packed = lnet.packData(mytable)
-print("Packed - ", packed)
-unpacked = lnet.unpackData(packed)
-print("Upacked: ",unpacked["key"], unpacked["sdfasdf"], unpacked.s03)
+-- mytable={key="value", sdfasdf=123, s03="321"}
+-- mytable["p1"]="e"
+-- packed = lnet.packData(mytable)
+-- print("Packed - ", packed)
+-- unpacked = lnet.unpackData(packed)
+-- print("Upacked: ",unpacked["key"], unpacked["sdfasdf"], unpacked.s03)
 --todo check lnet. sockets funcs
 --print( lnet.join_addresses("1", "23", "dcba", "abcd","127.0.0.1","192.168.0.0.1", "ffff:ffff:fff:ffff:fffffff") )
 --print(lnet.join_data("0.0.0.0","1.1.1.1") )

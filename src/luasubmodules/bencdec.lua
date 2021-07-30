@@ -84,7 +84,11 @@ function baes:new(key,iv)
 		obj.iv=iv   or encdec.genRandBytes(16)
 		obj.aesdata_enc={}
 		obj.aesdata_dec={}
-		
+
+		function obj:checkSizes()	
+			if not string.len(obj.iv) == 16 then error("IV size have to be 128 bit(16 byte/16 len)") end
+			if not string.len(obj.key) == 32 then error("KEY size have to be 256 bit(32 byte/32 len)") end
+		end
 
 		function obj:getKey()
 			return obj.key
@@ -113,10 +117,12 @@ function baes:new(key,iv)
 			obj.aesdata_enc = encdec.createAESData(msg,size)
 		end
 		function obj:encrypt(msg,t)
+			obj:checkSizes()
 			t = t or AESENCType['t_chacha20']
 			obj.aesdata_enc=encdec.AESenc(obj.key,obj.iv,msg,t)
 		end
 		function obj:decrypt(aesdata,t)
+			obj:checkSizes()
 			t = t or AESENCType['t_chacha20']
 			obj.aesdata_dec=encdec.AESdec(obj.key,obj.iv,aesdata,t)
 		end

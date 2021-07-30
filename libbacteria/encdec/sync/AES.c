@@ -14,7 +14,10 @@ int AES_any_decrypt(aes_enctype enc, unsigned char *ciphertext,
   int len;
 
   int plaintext_len;
-
+  if(strlen(iv) != 16 || strlen(key) != 32){
+	 fprintf(stderr,"IV size will be 16. and key will be 32. (%d:%d) \n", strlen(iv), strlen(key));
+	 return -1;
+  }
   /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new()))
     HANDLERRSSL();
@@ -63,6 +66,10 @@ int AES_any_encrypt(aes_enctype enc, unsigned char *plaintext,
   int len;
 
   int ciphertext_len;
+  if(strlen(iv) != 16 || strlen(key) != 32){
+	 fprintf(stderr,"IV size will be 16. and key will be 32. (%d:%d) \n", strlen(iv), strlen(key));
+	 return -1;
+  }
 
   /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -111,7 +118,7 @@ CREATEAESALGO(chacha20_poly1305, EVP_chacha20_poly1305);
 void generate_rand_bytes(size_t len, unsigned char *key) {
   srand(time(NULL));
   for (unsigned int i = len - 1; i--;) {
-    key[i] = rand() % 200;
+    key[i] = rand() % 255+1;
   }
 }
 
