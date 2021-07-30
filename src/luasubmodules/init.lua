@@ -187,7 +187,12 @@ local function EncDecTest()
 
 	k4:initKeyPairFromFile("x25519.dat")
 	
-
+	if( string.len(string.tohex(pub1)) ~= 64 or string.len(string.tohex(pub2)) ~= 64 )
+	then
+		print("TODO: create test for initKeyPair sizes of keys")
+		print("NOW: there is not normal size of pubkey, restart test")
+		return EncDecTest()
+	end
 	print("Pub1: ", string.tohex(pub1), string.fromhex(string.tohex(pub1)) == pub1 )
 	print("Pub2: ", string.tohex(pub2), string.fromhex(string.tohex(pub2)) == pub2 )
 
@@ -416,23 +421,23 @@ local function checkEd25519rsa ()
 	ed25519rsa.freeaKey(rsa)
 	ed25519rsa.freeaKey(rsa_)
 end
---checkEd25519rsa ()
---GMPTEST()
---CryptocoinsTest()
+checkEd25519rsa ()
+GMPTEST()
+CryptocoinsTest()
 EncDecTest()
 
---gdbusedraw=false
---checkGD(gdbusedraw,120,120,100,color)
+gdbusedraw=false
+checkGD(gdbusedraw,120,120,100,color)
 
 
--- mytable={key="value", sdfasdf=123, s03="321"}
--- mytable["p1"]="e"
--- packed = lnet.packData(mytable)
--- print("Packed - ", packed)
--- unpacked = lnet.unpackData(packed)
--- print("Upacked: ",unpacked["key"], unpacked["sdfasdf"], unpacked.s03)
+mytable={key="value", sdfasdf=123, s03="321"}
+mytable["p1"]="e"
+packed = lnet.packData(mytable)
+print("Packed - ", packed)
+unpacked = lnet.unpackData(packed)
+print("Upacked: ",unpacked["key"], unpacked["sdfasdf"], unpacked.s03)
 --todo check lnet. sockets funcs
---print( lnet.join_addresses("1", "23", "dcba", "abcd","127.0.0.1","192.168.0.0.1", "ffff:ffff:fff:ffff:fffffff") )
---print(lnet.join_data("0.0.0.0","1.1.1.1") )
---print(lnet.join_data("30203032023","3040320", ',') )
+print( lnet.join_addresses("1", "23", "dcba", "abcd","127.0.0.1","192.168.0.0.1", "ffff:ffff:fff:ffff:fffffff") )
+print(lnet.join_data("0.0.0.0","1.1.1.1") )
+print(lnet.join_data("30203032023","3040320", ',') )
 

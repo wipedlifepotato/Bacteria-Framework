@@ -84,6 +84,13 @@ function baes:new(key,iv)
 		obj.iv=iv   or encdec.genRandBytes(16)
 		obj.aesdata_enc={}
 		obj.aesdata_dec={}
+		while string.len(obj.key) ~= 32 do
+			if string.len(obj.key) > 32 then
+				obj.key=string.sub(obj.key,0,32)
+			else
+				obj.key=key.."0"
+			end
+		end
 
 		function obj:checkSizes()	
 			if not string.len(obj.iv) == 16 then error("IV size have to be 128 bit(16 byte/16 len)") end

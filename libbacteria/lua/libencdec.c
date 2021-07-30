@@ -193,11 +193,11 @@ int lua_freeAESData(lua_State *L) {
 int lua_getKeyPair(lua_State *L) {
   /*
           EVP_PKEY * privKey;	//, *pubKey ;
-          unsigned char pubKey[LENKEY+1];
+          unsigned char pubKey[X25519_LENKEY+1];
           EVP_PKEY_CTX * pKeyCtx;//just ctx
   */
   size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
-                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
+                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (X25519_LENKEY);
   struct x25519_keysPair *ret =
       (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
   struct x25519_keysPair pair = x25519_generateKeyPair();
@@ -206,7 +206,7 @@ int lua_getKeyPair(lua_State *L) {
     return fprintf(stderr, "can't CTX init\n");
   }
   ret->privKey = pair.privKey;
-  memcpy(ret->pubKey, pair.pubKey, LENKEY + 1);
+  memcpy(ret->pubKey, pair.pubKey, X25519_LENKEY + 1);
   // ret->pubKey = pair.pubKey;
   ret->pKeyCtx = pair.pKeyCtx;
   return 1;
@@ -220,11 +220,11 @@ int lua_initKeyPairFromFile(lua_State *L) {
     return 1;
   }
   size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
-                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
+                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (X25519_LENKEY);
   struct x25519_keysPair *ret =
       (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
   ret->privKey = rt.privKey;
-  memcpy(ret->pubKey, rt.pubKey, LENKEY + 1);
+  memcpy(ret->pubKey, rt.pubKey, X25519_LENKEY + 1);
   // ret->pubKey = pair.pubKey;
   ret->pKeyCtx = rt.pKeyCtx;
   return 1;
@@ -276,7 +276,7 @@ int lua_createKeyPair(lua_State *L) {
   uint8_t *priv = (uint8_t *)luaL_checkstring(L, 2);
   struct x25519_keysPair pair = x25519_createKeyPair(priv, pub);
   size_t nbytes = sizeof(struct x25519_keysPair) + sizeof(EVP_PKEY *) +
-                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (LENKEY);
+                  sizeof(EVP_PKEY_CTX *) + sizeof(unsigned char) * (X25519_LENKEY);
   struct x25519_keysPair *ret =
       (struct x25519_keysPair *)lua_newuserdata(L, nbytes);
   if (pair.pKeyCtx == NULL) {
@@ -284,7 +284,7 @@ int lua_createKeyPair(lua_State *L) {
     return fprintf(stderr, "can't CTX init\n");
   }
   ret->privKey = pair.privKey;
-  memcpy(ret->pubKey, pair.pubKey, LENKEY + 1);
+  memcpy(ret->pubKey, pair.pubKey, X25519_LENKEY + 1);
   // ret->pubKey = pair.pubKey;
   ret->pKeyCtx = pair.pKeyCtx;
   return 1;
@@ -293,17 +293,17 @@ INITLUAFUNC(getPubKey) {
   struct x25519_keysPair *in = (struct x25519_keysPair *)lua_touserdata(L, 1);
   if (in == NULL)
     luaL_error(L, "x25519_keysPair broken");
-  lua_pushstring(L, in->pubKey);
+  lua_pushlstring(L, in->pubKey, X25519_LENKEY);
   return 1;
 }
 INITLUAFUNC(getPrivKey) {
   struct x25519_keysPair *in = (struct x25519_keysPair *)lua_touserdata(L, 1);
   if (in == NULL)
     luaL_error(L, "x25519_keysPair broken");
-  uint8_t retStr[LENKEY + 1];
-  retStr[LENKEY] = 0;
+  uint8_t retStr[X25519_LENKEY + 1];
+  retStr[X25519_LENKEY] = 0;
   x25519_getRawPrivKey(in->privKey, retStr);
-  lua_pushlstring(L, retStr, LENKEY + 1);
+  lua_pushlstring(L, retStr, X25519_LENKEY);
   return 1;
 }
 

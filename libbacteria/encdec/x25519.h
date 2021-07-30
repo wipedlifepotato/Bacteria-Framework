@@ -3,11 +3,13 @@
 #include<openssl/evp.h>
 #include<stdio.h>
 #include<string.h>
-#define LENKEY 32
+#define X25519_LENKEY 32
 struct x25519_keysPair{
+//	const size_t pubKeyLen = X25519_LENKEY;
 	EVP_PKEY * privKey;	//, *pubKey ;
-	unsigned char pubKey[LENKEY+1];
+	unsigned char pubKey[X25519_LENKEY+1];
 	EVP_PKEY_CTX * pKeyCtx;//just ctx
+
 };
 
 struct x25519_keysPair x25519_createKeyPair(const uint8_t * priv, const uint8_t * pub);

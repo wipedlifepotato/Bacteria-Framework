@@ -1,7 +1,7 @@
 #include "encdec/x25519.h"
 #include <openssl/pem.h>
 
-static size_t len_key = LENKEY;
+static size_t len_key = X25519_LENKEY;
 // TODO:
 
 #define ADDPREFIX(what, to) what##to
@@ -52,10 +52,10 @@ struct x25519_keysPair x25519_initKeyPairFromFile(const char *filepath) {
   // EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
   EVP_PKEY *pkey = NULL;
   pkey = PEM_read_PrivateKey(keyfile, NULL, NULL, NULL);
-  unsigned char pubKey[LENKEY + 1];
-  unsigned char privKey[LENKEY + 1];
-  pubKey[LENKEY] = 0;
-  privKey[LENKEY] = 0;
+  unsigned char pubKey[X25519_LENKEY + 1];
+  unsigned char privKey[X25519_LENKEY + 1];
+  pubKey[X25519_LENKEY] = 0;
+  privKey[X25519_LENKEY] = 0;
   x25519_getRawPubKey(pkey, pubKey);
   x25519_getRawPrivKey(pkey, privKey);
   // EVP_PKEY_CTX_free(ctx);
