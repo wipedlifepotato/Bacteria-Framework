@@ -55,3 +55,7 @@
 		make
 	```
 
+# Documentation
+- for now not exists. look to https://github.com/wipedlifepotato/Bacteria-Framework/blob/master/src/luasubmodules/init.lua#L1
+there all things that works on Lua. its part of libbacteria. There examples. 
+
